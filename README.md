@@ -139,6 +139,36 @@ Reglas para que la medición sea honesta:
    de ninguna PK (`autor_id`, `genero_nombre`, `username`), para que al quitar el
    secundario realmente caigan a *seq scan*.
 
+#### Hallazgo educativo: cuándo el índice PERJUDICA
+
+Los índices **no son gratis**. `sql/07_index_overhead.sql` lo demuestra; medido en
+`bd_literaria_1m`:
+
+**A. El índice encarece las ESCRITURAS.** Insertar 1 000 000 de filas:
+
+| Caso | Tiempo |
+|------|--------|
+| Sin índice | ~1 130 ms |
+| Con 2 índices que mantener | ~5 640 ms (**≈5× más lento**) |
+
+Cada índice debe actualizarse en cada `INSERT`/`UPDATE`/`DELETE`. Por eso el faker
+carga **sin** índices secundarios y los crea después.
+
+**B. Una lectura NO selectiva con el índice forzado es más lenta.**
+`SELECT * FROM material WHERE anio_publicacion >= 1900` (≈100 % de las filas):
+
+| Plan | Tiempo |
+|------|--------|
+| Seq Scan (lo que elige el planner) | ~139 ms |
+| Index Scan forzado (`enable_seqscan=off`) | ~171 ms (**≈23 % más lento**) |
+
+Cuando el filtro abarca casi toda la tabla, recorrer el índice y saltar al heap
+(acceso aleatorio) cuesta más que un *seq scan* secuencial. **El planner tiene razón
+al ignorar el índice**; se fuerza solo para demostrarlo.
+
+> Panorama completo del experimento: el índice **ayuda** (Q1/Q4), es **indiferente**
+> (Q3, agregación total) o **perjudica** (escrituras / lectura no selectiva).
+
 ### C. Decisiones de realismo de los datos (faker)
 
 Los datos sintéticos se generan para parecerse a producción (no solo ser válidos):
