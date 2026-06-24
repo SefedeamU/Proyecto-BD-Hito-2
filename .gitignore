@@ -1,0 +1,106 @@
+# =====================================================================
+# .gitignore — proyecto Hito 2 BD literaria
+# Evita subir secretos, credenciales y artefactos generados.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Secretos y credenciales (NUNCA subir)
+# ---------------------------------------------------------------------
+.env
+.env.*
+*.env
+# Las plantillas SÍ se versionan (sin comentarios inline: .gitignore no los soporta):
+!.env.example
+!.env.sample
+
+secrets/
+secrets.*
+*.secret
+credentials.json
+service-account*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+.pgpass
+.netrc
+.htpasswd
+*.token
+*token*.txt
+aws.json
+.aws/
+.npmrc
+
+# ---------------------------------------------------------------------
+# Python (faker/ y scripts)
+# ---------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------
+# Node / frontend / backend JS (Api-Frontend-(Bonus)/)
+# ---------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.next/
+.nuxt/
+.svelte-kit/
+.vite/
+.cache/
+coverage/
+
+# ---------------------------------------------------------------------
+# LaTeX (docs/informe_hito2.tex)
+# ---------------------------------------------------------------------
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.bbl
+*.blg
+
+# ---------------------------------------------------------------------
+# Sistema operativo / editores
+# ---------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ---------------------------------------------------------------------
+# Datos pesados generados (descomenta si NO quieres versionarlos)
+# Los dumps de 100k/1m pueden pesar cientos de MB.
+# ---------------------------------------------------------------------
+# dumps/*.dump
+# data/
