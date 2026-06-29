@@ -87,6 +87,11 @@ El espíritu de las correcciones fue **doble**: (1) cerrar reglas de negocio del
 
 **Por qué:** en esas tablas la PK ya **empieza** por `Material_Id`, de modo que un índice adicional sobre esa columna nunca se usaría y mostraría 0% de mejora, ensuciando los resultados. Se conservan únicamente los índices sobre columnas **no** cubiertas por la primera columna de alguna PK (`Escribe.Autor_Id`, `Pertenece.Genero_Nombre`, `Resena.Material_Id` —cuya PK es `Code`—, `Leer(Username, Email, Fecha)`, etc.), que son los que producen un contraste real con/sin índice.
 
+### [Cambio L] Consulta por RANGO de años (Q5)
+**Qué:** se agregó una quinta consulta experimental (`querys/q5_materiales_por_rango_anio.sql` y en `sql/06_experiments.sql`) que filtra `Material.Anio_Publicacion BETWEEN ... AND ...`.
+
+**Por qué:** requisito explícito del profesor: al menos una consulta debe filtrar por **rango**, para mostrar la ventaja de un índice B-tree resolviendo un predicado `BETWEEN` (recorre un tramo contiguo de las hojas del árbol). Se apoya en el índice `idx_material_anio`. Con un rango selectivo (primeros años, escasos) el planner usa `Bitmap Index Scan` y gana de forma clara; con un rango amplio vuelve a `Seq Scan` a propósito (crossover por selectividad), lo cual también es un resultado a reportar.
+
 ---
 
 ## 3. Decisiones deliberadas de NO cambiar (fidelidad al Hito 1)

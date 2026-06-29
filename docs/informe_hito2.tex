@@ -1,0 +1,657 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage{parskip}
+\usepackage{caption}
+\usepackage{listings}
+\usepackage{multirow}
+
+\geometry{margin=2.5cm}
+\setlength{\parskip}{0.6em}
+\setlength{\parindent}{0pt}
+
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
+
+\definecolor{codebg}{rgb}{0.96,0.96,0.96}
+\definecolor{codekw}{rgb}{0.0,0.0,0.6}
+\definecolor{codecomment}{rgb}{0.0,0.5,0.0}
+\lstdefinestyle{sql}{
+  language=SQL,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  keywordstyle=\color{codekw}\bfseries,
+  commentstyle=\color{codecomment}\itshape,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  showstringspaces=false,
+  morekeywords={EXPLAIN,ANALYZE,BUFFERS,BIGINT,VARCHAR,INTEGER,BETWEEN,COALESCE,NUMERIC,DEFERRABLE,DEFERRED},
+  literate={á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
+           {ñ}{{\~{n}}}1 {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1 {Ñ}{{\~{N}}}1
+}
+\lstset{style=sql}
+
+\begin{document}
+
+% ------------------------------------------------------------------
+% PORTADA
+% ------------------------------------------------------------------
+\thispagestyle{empty}
+\begin{center}
+\vspace*{1cm}
+{\Large \bfseries Universidad de Ingeniería y Tecnología --- UTEC}\\[1.2cm]
+{\Large \bfseries Proyecto de Base de Datos I}\\[0.3cm]
+{\large Hito 2: Implementación en PostgreSQL, Optimización y Experimentación con Índices}\\[1.2cm]
+
+\textbf{Curso:} Base de Datos I\\
+\textbf{Profesor:} Wilder Nina Choquehuayta\\   % <-- confirmar con el profe real
+\textbf{Tema:} Plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios\\[1.2cm]
+
+\textbf{Integrantes:}\\[0.2cm]
+\textit{Sergio Felipe Delgado Amado --- 202310227}\\
+\textit{Antonio Jorge Guerrero Cedrón --- 202510717}\\
+\textit{Luciana Mylene Melgarejo Quispe --- 202420055}\\[1.2cm]
+
+\textbf{Repositorio:}
+\href{https://github.com/SefedeamU/Proyecto-BD-Hito-2}{github.com/SefedeamU/Proyecto-BD-Hito-2}
+
+\vfill
+{\large Ciclo 2026.1}
+\end{center}
+
+\newpage
+\tableofcontents
+\newpage
+
+% ------------------------------------------------------------------
+\section*{Sobre este informe}
+\addcontentsline{toc}{section}{Sobre este informe}
+
+Este documento corresponde al Hito 2 del proyecto. El Hito 1 (requisitos,
+modelo E-R y modelo relacional) se entregó por separado y no se reproduce
+aquí. El esquema implementado parte directamente de ese modelo; los ajustes
+que fue necesario hacer al pasar al código se explican en la
+Sección~\ref{sec:cambios} y están todos documentados en
+\texttt{docs/cambios\_respecto\_hito1.md} dentro del repositorio.
+
+El dominio es una plataforma de catálogo literario. La entidad central es
+\texttt{Material}, que representa libros, ensayos, revistas, poemas y
+audiolibros, y se relaciona con autores, géneros, subgéneros, editoriales,
+premios, ilustraciones, curiosidades, reseñas, likes e historial de lectura.
+
+% ==================================================================
+\section{Implementación de la base de datos}
+
+\subsection{Creación de tablas en PostgreSQL}
+
+El esquema se implementó en PostgreSQL a partir del modelo relacional del
+Hito 1. El script \texttt{sql/01\_tables.sql} crea las 25 tablas en el orden
+correcto de dependencias. Para la traducción de tipos se siguió el diccionario
+de datos del Hito 1:
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Tipo en el modelo relacional} & \textbf{Tipo en PostgreSQL} \\
+\midrule
+Bigint           & \texttt{BIGINT} \\
+Int              & \texttt{INTEGER} \\
+Varchar(n)       & \texttt{VARCHAR(n)} \\
+Date             & \texttt{DATE} \\
+Double Precision & \texttt{NUMERIC(3,1)} (ver Sección~\ref{sec:cambios}, cambio G) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Las restricciones de integridad del Hito 1 se implementaron de tres formas
+según su naturaleza:
+
+\begin{itemize}
+  \item \textbf{Restricciones de columna o tabla} (\texttt{NOT NULL},
+  \texttt{UNIQUE}, \texttt{PRIMARY KEY}, \texttt{FOREIGN KEY}, \texttt{CHECK}):
+  para reglas que dependen solo de una fila o de una tabla. Por ejemplo,
+  \texttt{CHECK (CHAR\_LENGTH(Password) = 12)} y \texttt{CHECK (Edad >= 12)}
+  en \texttt{Usuario}; \texttt{CHECK (Relevancia BETWEEN 1 AND 5)} en
+  \texttt{Premio}; \texttt{CHECK (... BETWEEN 1 AND 10)} para los cuatro
+  indicadores de contenido en \texttt{AgeRate}.
+
+  \item \textbf{Columna discriminadora}: la herencia total y disjunta de
+  \texttt{Material} se garantiza con la columna \texttt{Tipo VARCHAR(10) NOT
+  NULL} y un \texttt{CHECK} que solo acepta los cinco valores válidos
+  (ver cambio A).
+
+  \item \textbf{Triggers}: para reglas que dependen de dos tablas a la vez
+  y no se pueden expresar con un \texttt{CHECK} simple
+  (ver Sección~\ref{sec:triggers}).
+\end{itemize}
+
+Las definiciones de \texttt{Material} y \texttt{Usuario}, que concentran la
+mayoría de las restricciones, son las siguientes:
+
+\begin{lstlisting}
+CREATE TABLE Material (
+    Id               BIGINT       NOT NULL,
+    Numero_Paginas   INTEGER      NOT NULL,
+    Anio_Publicacion BIGINT       NOT NULL,
+    Eslogan          VARCHAR(100),
+    Alias            VARCHAR(50),
+    Pais             VARCHAR(15)  NOT NULL,
+    Idioma           VARCHAR(15)  NOT NULL,
+    Tipo             VARCHAR(10)  NOT NULL,   -- discriminador de subtipo [cambio A]
+    AgeRate_Code     BIGINT       NOT NULL,
+    Editorial_Id     BIGINT       NOT NULL,
+    CONSTRAINT pk_material      PRIMARY KEY (Id),
+    CONSTRAINT ck_material_tipo CHECK (Tipo IN ('Libro','Ensayo','Revista','Poema','AudioBook')),
+    CONSTRAINT fk_material_agerate   FOREIGN KEY (AgeRate_Code)  REFERENCES AgeRate (Code),
+    CONSTRAINT fk_material_editorial FOREIGN KEY (Editorial_Id)  REFERENCES Editorial (Id)
+);
+
+CREATE TABLE Usuario (
+    Username  VARCHAR(50)   NOT NULL,
+    Email     VARCHAR(100)  NOT NULL,
+    Password  VARCHAR(12)   NOT NULL,
+    Nombre    VARCHAR(20)   NOT NULL,
+    Apellido  VARCHAR(20)   NOT NULL,
+    Edad      INTEGER       NOT NULL,
+    Telefono  BIGINT        NOT NULL,
+    Ciudad    VARCHAR(20)   NOT NULL,
+    Rol       VARCHAR(20)   NOT NULL,
+    CONSTRAINT pk_usuario          PRIMARY KEY (Username, Email),
+    CONSTRAINT uq_usuario_username UNIQUE (Username),
+    CONSTRAINT uq_usuario_email    UNIQUE (Email),
+    CONSTRAINT ck_usuario_password CHECK (CHAR_LENGTH(Password) = 12),
+    CONSTRAINT ck_usuario_edad     CHECK (Edad >= 12)
+);
+\end{lstlisting}
+
+El esquema completo incluye las tablas maestras (\texttt{AgeRate},
+\texttt{Editorial}, \texttt{Genero}, \texttt{Autor}, \texttt{Premio},
+\texttt{Ilustracion}, \texttt{Curiosidad}, \texttt{Material},
+\texttt{Usuario}), las entidades débiles (\texttt{Warning},
+\texttt{SubGenero}), los cinco subtipos de Material y las tablas de relación
+(\texttt{Escribe}, \texttt{Pertenece}, \texttt{PerteneceSubGenero},
+\texttt{Popularizo}, \texttt{Contiene}, \texttt{Tiene}, \texttt{Ganar},
+\texttt{Leer}, \texttt{Likes}, \texttt{Resena}).
+
+\subsubsection{Triggers}
+\label{sec:triggers}
+
+El script \texttt{sql/02\_triggers.sql} implementa cuatro reglas del Hito 1
+que dependen de más de una tabla:
+
+\begin{enumerate}[label=(\alph*)]
+  \item \textbf{Año de publicación vs.\ fundación editorial.}
+  \texttt{Anio\_Publicacion} de un material debe ser mayor o igual al año de
+  \texttt{Fundacion} de su editorial. Se valida con un trigger
+  \texttt{BEFORE INSERT OR UPDATE} sobre \texttt{Material}.
+
+  \item \textbf{Fecha de reseña vs.\ publicación.}
+  El año de la fecha de una reseña debe ser mayor o igual al
+  \texttt{Anio\_Publicacion} del material reseñado. También
+  \texttt{BEFORE INSERT OR UPDATE}, esta vez sobre \texttt{Resena}.
+
+  \item \textbf{Todo material tiene al menos un autor.}
+  Participación total del lado \texttt{Material} en \texttt{Escribe}.
+  Se implementa como \texttt{CONSTRAINT TRIGGER ... DEFERRABLE INITIALLY
+  DEFERRED}: la validación ocurre al \texttt{COMMIT}, no fila por fila.
+  Esto es necesario porque la inserción de \texttt{Material} y la de
+  \texttt{Escribe} no se pueden hacer en el mismo instante; el trigger
+  diferido da margen hasta que se cierre la transacción.
+
+  \item \textbf{Todo género tiene al menos un autor representante.}
+  Participación total en \texttt{Popularizo}. Mismo mecanismo diferido
+  que el punto anterior.
+\end{enumerate}
+
+\subsubsection{Vistas de usuario}
+
+El script \texttt{sql/03\_views.sql} define cinco vistas:
+
+\begin{itemize}
+  \item \textbf{vista\_material\_basico}: datos básicos de cada material
+  con su editorial y clasificación de edad.
+  \item \textbf{vista\_material\_autores}: materiales con sus autores
+  (relación \texttt{Escribe}).
+  \item \textbf{vista\_material\_subgenero}: materiales con género y
+  subgénero; requiere la tabla \texttt{PerteneceSubGenero} añadida en
+  el Hito 2 (cambio I).
+  \item \textbf{vista\_popularidad\_material}: cantidad de likes, lecturas
+  y reseñas por material, junto con el promedio de puntaje.
+  \item \textbf{vista\_historial\_usuario}: historial de lectura por usuario
+  con las fechas.
+\end{itemize}
+
+\subsection{Carga de datos}
+\label{sec:carga}
+
+La carga se realiza con un generador de datos sintéticos propio, en la carpeta
+\texttt{faker/}. Está escrito en Python usando las librerías \texttt{Faker} y
+\texttt{psycopg}. El generador aplica el esquema completo antes de poblar,
+genera primero las tablas maestras y luego las de interacción para respetar las
+llaves foráneas, y envuelve la carga de \texttt{Material}+\texttt{Escribe} y
+\texttt{Genero}+\texttt{Popularizo} en transacciones para que los triggers
+diferidos puedan validar al \texttt{COMMIT}. Usa \texttt{COPY} en lugar de
+\texttt{INSERT} fila por fila para que la carga sea eficiente, y una semilla
+fija (\texttt{SEED=42}) para que los datos sean reproducibles.
+
+\subsection{Los cuatro escenarios de volumen}
+
+Para el experimento se trabajó con cuatro bases de datos, una por escenario:
+
+\begin{center}
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{Base} & \textbf{Usuarios} & \textbf{Materiales}
+  & \textbf{Likes} & \textbf{Lecturas} & \textbf{Reseñas} \\
+\midrule
+\texttt{bd\_literaria\_1k}   &     200 &     300
+  &     1\,000 &     1\,000 &     1\,000 \\
+\texttt{bd\_literaria\_10k}  &   1\,000 &   2\,000
+  &    10\,000 &    10\,000 &    10\,000 \\
+\texttt{bd\_literaria\_100k} &  10\,000 &  20\,000
+  &   100\,000 &   100\,000 &   100\,000 \\
+\texttt{bd\_literaria\_1m}   & 100\,000 & 100\,000
+  & 1\,000\,000 & 1\,000\,000 & 1\,000\,000 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+La base de 1M tiene en total aproximadamente 3.86 millones de filas sumando
+todas las tablas. Los cuatro escenarios se entregan como dumps restaurables en
+\texttt{dumps/} y pueden regenerarse con el faker usando la misma semilla.
+
+\subsection{Ajustes al modelo del Hito 1}
+\label{sec:cambios}
+
+Al escribir el código se identificaron once puntos donde el modelo relacional
+dejaba reglas del dominio sin mecanismo de cumplimiento, o donde había
+decisiones de diseño que convenía precisar antes de poblar las bases. Todos
+los cambios están marcados como comentarios \texttt{[Cambio X]} en los scripts
+y explicados con detalle en \texttt{docs/cambios\_respecto\_hito1.md}.
+
+\begin{center}
+\begin{longtable}{clp{8.5cm}}
+\toprule
+\textbf{ID} & \textbf{Tipo} & \textbf{Descripción} \\
+\midrule
+\endhead
+A & Integridad & Columna \texttt{Tipo} en \texttt{Material} para garantizar
+    herencia total y disjunta. \\
+B & Regla de negocio & Trigger diferido: un material sin autores no puede
+    quedar en la base. \\
+C & Regla de negocio & Trigger diferido: un género sin al menos un autor
+    representante no puede quedar en la base. \\
+D & Modelo & \texttt{Fecha} entra a la PK de \texttt{Leer} para poder
+    registrar relecturas. \\
+E & Integridad & \texttt{UNIQUE(Material\_Id, Usuario\_Username,
+    Usuario\_Email)} en \texttt{Resena}: un usuario no puede reseñar el
+    mismo material dos veces. \\
+F & Integridad & \texttt{CHECK (Likes >= 0)} en \texttt{Resena}: el contador
+    de likes no puede ser negativo. \\
+G & Tipo de dato & \texttt{Resena.Puntaje} cambia de \texttt{DOUBLE PRECISION}
+    a \texttt{NUMERIC(3,1)}: el Hito 1 especificaba un decimal exacto, y
+    \texttt{DOUBLE PRECISION} no lo garantiza. \\
+H & Integridad ref. & \texttt{ON UPDATE CASCADE} en las FK que apuntan a
+    \texttt{Usuario}: si cambia el username o el email, las tablas dependientes
+    se actualizan solas. \\
+I & Modelo & Nueva tabla \texttt{PerteneceSubGenero}: el Hito 1 pedía poder
+    buscar materiales por subgénero, pero el modelo relacional dejaba a
+    \texttt{SubGenero} sin conexión con \texttt{Material}. \\
+J & Experimento & La consulta de materiales populares se reescribió para evitar
+    un producto cartesiano que distorsionaba los tiempos. \\
+K & Experimento & Se quitaron los índices redundantes con la primera columna de
+    alguna PK (no aportan mejora y ensucian el experimento). \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+Vale la pena detenerse en los cambios J y K porque afectan directamente los
+resultados del experimento. El cambio J corrige la consulta de popularidad:
+la versión original unía las tres tablas de interacción con \texttt{LEFT JOIN}
+directos sobre \texttt{Material}, lo que generaba un producto cartesiano
+(filas de likes por filas de lecturas por filas de reseñas por cada material).
+La versión corregida agrega cada tabla por separado en subconsultas y luego las
+une, de modo que el tiempo que se mide refleja el costo real de una agregación
+total y no un error de formulación. El cambio K retira índices como el de
+\texttt{Material\_Id} en \texttt{Escribe}: como esa columna es la primera de
+la PK de \texttt{Escribe}, ya existe un índice de PK sobre ella y crear uno
+secundario encima no cambia nada; incluirlo en el experimento solo añadiría
+una fila de resultados con 0\% de mejora.
+
+% ==================================================================
+\section{Optimización y Experimentación}
+
+\subsection{Consultas del experimento}
+
+\subsubsection{Criterios de selección}
+
+Se eligieron cinco consultas que cubren patrones de acceso distintos. El
+criterio principal fue que el conjunto en su totalidad mostrara los tres
+comportamientos posibles de un índice secundario: cuándo ayuda mucho,
+cuándo ayuda poco y cuándo no ayuda. Una de las consultas es por rango
+(\texttt{BETWEEN}), que es el caso más ilustrativo del funcionamiento de
+un índice B-tree.
+
+\begin{center}
+\begin{longtable}{p{0.9cm}p{4.2cm}p{4.0cm}p{3.4cm}}
+\toprule
+\textbf{ID} & \textbf{Qué devuelve} & \textbf{Tipo de acceso}
+  & \textbf{Índice relevante} \\
+\midrule
+\endhead
+Q1 & Materiales de un autor & Filtro selectivo por igualdad
+  & \texttt{idx\_escribe\_autor} \\
+Q2 & Materiales de un género & Filtro poco selectivo por igualdad
+  & \texttt{idx\_pertenece\_genero} \\
+Q3 & Los 20 materiales más populares & Agregación total sin filtro
+  & (ninguno aplica) \\
+Q4 & Historial de lectura de un usuario & Igualdad + orden por fecha
+  & \texttt{idx\_leer\_usuario} \\
+Q5 & Materiales en un rango de años & \textbf{Rango} (\texttt{BETWEEN})
+  & \texttt{idx\_material\_anio} \\
+\bottomrule
+\end{longtable}
+\end{center}
+
+\subsubsection{Consultas SQL}
+
+Las consultas están limpias en \texttt{querys/} y con \texttt{EXPLAIN
+(ANALYZE, BUFFERS)} en \texttt{sql/06\_experiments.sql}. Se reproducen
+aquí las dos más representativas del experimento.
+
+\paragraph{Q5 --- Materiales por rango de años.}
+
+\begin{lstlisting}
+SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
+FROM   Material m
+WHERE  m.Anio_Publicacion BETWEEN 1900 AND 1905
+ORDER  BY m.Anio_Publicacion;
+\end{lstlisting}
+
+El rango elegido (primeros años del catálogo) es selectivo: recupera
+aproximadamente el 0.1\% de las filas en la base de 1M. Eso permite que
+el planificador use el índice \texttt{idx\_material\_anio} de forma
+natural, sin forzarlo. En la Sección~\ref{sec:crossover} se analiza
+qué pasa cuando el rango es más amplio.
+
+\paragraph{Q4 --- Historial de lectura de un usuario.}
+
+\begin{lstlisting}
+SELECT m.Id, m.Alias, le.Fecha
+FROM   Usuario  u
+JOIN   Leer     le  ON le.Usuario_Username = u.Username
+                   AND le.Usuario_Email    = u.Email
+JOIN   Material m   ON m.Id = le.Material_Id
+WHERE  u.Username = :username
+  AND  u.Email    = :email
+ORDER  BY le.Fecha DESC;
+\end{lstlisting}
+
+El índice \texttt{idx\_leer\_usuario} es compuesto:
+\texttt{(Usuario\_Username, Usuario\_Email, Fecha DESC)}. Además de
+localizar las filas del usuario, entrega los resultados ya ordenados
+por fecha descendente, lo que evita el paso de \texttt{Sort}.
+
+\subsection{Metodología}
+
+\begin{itemize}
+  \item \textbf{Herramienta de medición:} \texttt{EXPLAIN (ANALYZE,
+  BUFFERS)}, que ejecuta la consulta y reporta el tiempo real y el plan
+  elegido por el planificador.
+
+  \item \textbf{Número de corridas:} seis por consulta. La primera se
+  descarta (estado frío) y se trabaja con la mediana de las cinco restantes
+  para tener una medida estable en estado caliente.
+
+  \item \textbf{Limpieza de caché entre corridas:} \texttt{DISCARD ALL}
+  antes de cada corrida, para que el planificador vuelva a construir el
+  plan desde cero y no reutilice planes cacheados de corridas anteriores.
+
+  \item \textbf{Escenario sin índices:} se ejecuta \texttt{sql/05\_drop\_indexes.sql},
+  que elimina todos los índices secundarios. Los de \texttt{PRIMARY KEY} y
+  \texttt{UNIQUE} no se pueden quitar porque son parte del esquema; por eso
+  las consultas del experimento filtran por columnas que no son la primera
+  de ninguna PK (\texttt{Autor\_Id}, \texttt{Genero\_Nombre},
+  \texttt{Usuario\_Username}/\texttt{Email}, \texttt{Anio\_Publicacion})
+  o son agregaciones totales donde ningún índice aplica (Q3).
+
+  \item \textbf{Escenario con índices:} se ejecuta \texttt{sql/04\_indexes.sql}
+  y luego \texttt{ANALYZE} para que el planificador tenga estadísticas
+  actualizadas.
+
+  \item El protocolo se repite para las cuatro bases.
+\end{itemize}
+
+\subsection{Índices del experimento}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Nombre} & \textbf{Definición} \\
+\midrule
+\texttt{idx\_escribe\_autor}    & \texttt{Escribe(Autor\_Id)} \\
+\texttt{idx\_pertenece\_genero} & \texttt{Pertenece(Genero\_Nombre)} \\
+\texttt{idx\_resena\_material}  & \texttt{Resena(Material\_Id)} \\
+\texttt{idx\_leer\_usuario}     & \texttt{Leer(Usuario\_Username, Usuario\_Email, Fecha DESC)} \\
+\texttt{idx\_material\_anio}    & \texttt{Material(Anio\_Publicacion)} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Plataforma de pruebas}
+
+Las mediciones se realizaron sobre PostgreSQL~16 en Ubuntu~24.04,
+con la configuración por defecto del servidor, en las cuatro bases
+descritas en la Sección~1.3.
+
+\subsection{Medición de tiempos}
+
+% ===========================================================================
+% PENDIENTE — Completar tras correr el experimento en el servidor desplegado.
+%
+% Instrucciones para Sergio (o quien tenga acceso al servidor):
+%
+%   Para cada base (bd_literaria_1k, 10k, 100k, 1m):
+%
+%   1. Conectarse:
+%      export PGPASSWORD='<TU_PASSWORD>'   # tomar de faker/.env (no versionado)
+%      psql -h <HOST> -p 5432 -U <USUARIO> -d bd_literaria_1m
+%
+%   2. Quitar índices secundarios:
+%      \i sql/05_drop_indexes.sql
+%      ANALYZE;
+%
+%   3. Correr las consultas y anotar "Execution Time" de cada una:
+%      \i sql/06_experiments.sql
+%
+%   4. Crear índices:
+%      \i sql/04_indexes.sql
+%      ANALYZE;
+%
+%   5. Correr de nuevo y anotar los nuevos "Execution Time":
+%      \i sql/06_experiments.sql
+%
+%   Con esos 40 valores (5 consultas × 4 bases × 2 escenarios) se completan
+%   las dos tablas de abajo, se generan los gráficos y se redactan los
+%   análisis que aparecen como pendientes en este documento.
+% ===========================================================================
+
+\subsubsection{Sin índices}
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
+  & \textbf{100K (ms)} & \textbf{1M (ms)} \\
+\midrule
+Q1 (autor)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q2 (género)    & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q3 (populares) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q4 (historial) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsubsection{Con índices}
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+\textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
+  & \textbf{100K (ms)} & \textbf{1M (ms)} \\
+\midrule
+Q1 (autor)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q2 (género)    & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q3 (populares) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q4 (historial) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Resultados}
+
+% PENDIENTE — Una vez completadas las tablas de tiempos, esta sección debe
+% incluir:
+%   - Un gráfico de barras por consulta (sin vs. con índice, en las 4 bases).
+%   - Un gráfico de aceleración (speedup) en la base de 1M.
+%   - Análisis por consulta explicando qué plan usa el motor y por qué.
+%
+% Para cada consulta conviene capturar también la salida de:
+%   EXPLAIN (ANALYZE, BUFFERS) <consulta>
+% tanto sin índice como con índice, para incluirla como evidencia.
+
+\textit{[Sección pendiente de completar una vez obtenidos los tiempos del
+servidor.]}
+
+\subsubsection{Q1 --- Materiales de un autor}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación de por qué \texttt{idx\_escribe\_autor} ayuda.]}
+
+\subsubsection{Q2 --- Materiales de un género}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación del impacto de la selectividad del filtro.]}
+
+\subsubsection{Q3 --- Materiales más populares}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación de por qué el índice no aporta en agregaciones totales.]}
+
+\subsubsection{Q4 --- Historial de lectura de un usuario}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación de \texttt{idx\_leer\_usuario} y cómo evita el paso de Sort.]}
+
+\subsubsection{Q5 --- Consulta por rango}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación del Bitmap Index Scan y la bondad del índice B-tree en
+predicados BETWEEN selectivos. También analizar qué ocurre con rangos
+amplios (el punto de cruce por selectividad).]}
+
+\subsection{El costo de los índices}
+
+% PENDIENTE — Correr sql/07_index_overhead.sql en la base de 1M y anotar:
+%   - Tiempo de INSERT masivo sin índices.
+%   - Tiempo de INSERT masivo con índices.
+%   - Comparación de lectura no selectiva con y sin índice (forzado).
+
+\textit{[Pendiente. El script \texttt{sql/07\_index\_overhead.sql} mide el
+costo en escrituras y en lecturas no selectivas. Ejecutarlo sobre
+\texttt{bd\_literaria\_1m} y completar con los resultados.]}
+
+\subsection{Escalamiento por encima del millón (punto extra)}
+
+\textit{[Pendiente. Una vez obtenidos los tiempos de las cuatro bases, graficar
+el crecimiento del costo sin índices para ver si el patrón es lineal, y comparar
+con el comportamiento con índices. Discutir qué estrategias serían necesarias
+para volúmenes mayores al millón (vistas materializadas, particionamiento,
+réplicas de lectura).]}
+
+\subsection{Análisis y discusión}
+
+\textit{[Pendiente. Una vez con los datos completos, redactar el análisis
+comparativo de los tres comportamientos observados: cuándo el índice ayuda mucho,
+cuándo poco y cuándo no ayuda. Incluir la aceleración (speedup) de cada consulta
+en la base de 1M como referencia principal.]}
+
+% ==================================================================
+\section{Conclusiones}
+
+\begin{itemize}
+  \item Se implementó en PostgreSQL el modelo relacional del Hito 1: 25 tablas
+  con restricciones de integridad (PK, FK, UNIQUE, NOT NULL, CHECK), cuatro
+  triggers para reglas multi-tabla (dos de ellos diferidos) y cinco vistas de
+  usuario. Los once ajustes al modelo se documentaron de forma transparente.
+
+  \item Se generaron cuatro escenarios de volumen reproducibles, hasta
+  aproximadamente 3.86 millones de filas en el escenario de 1M, mediante un
+  generador de datos sintéticos propio con semilla fija y carga por \texttt{COPY}.
+
+  \item \textit{[Pendiente: agregar las conclusiones del experimento una vez
+  obtenidos los tiempos reales. Deben mencionar qué consultas se beneficiaron
+  del índice y en qué medida, el comportamiento de la consulta por rango (Q5),
+  y el costo de los índices en escrituras.]}
+\end{itemize}
+
+% ==================================================================
+\section{Anexos}
+
+\subsection{Estructura del repositorio}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\textbf{Archivo o carpeta} & \textbf{Contenido} \\
+\midrule
+\texttt{sql/01\_tables.sql}          & Tablas con todas sus restricciones. \\
+\texttt{sql/02\_triggers.sql}        & Funciones y triggers. \\
+\texttt{sql/03\_views.sql}           & Vistas de usuario. \\
+\texttt{sql/04\_indexes.sql}         & Índices del experimento. \\
+\texttt{sql/05\_drop\_indexes.sql}   & Quita los índices secundarios. \\
+\texttt{sql/06\_experiments.sql}     & Consultas con \texttt{EXPLAIN (ANALYZE, BUFFERS)}. \\
+\texttt{sql/07\_index\_overhead.sql} & Demostración del costo de los índices. \\
+\texttt{querys/}                     & Las cinco consultas limpias (Q1--Q5). \\
+\texttt{faker/}                      & Generador de datos sintéticos. \\
+\texttt{dumps/}                      & Dumps restaurables de las cuatro bases. \\
+\texttt{results/}                    & CSV de resultados y gráficos (pendiente). \\
+\texttt{docs/}                       & Este informe y el detalle de cambios. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Video de la experimentación}
+
+\textit{[Pendiente. El video debe mostrar la experimentación completa sobre la
+base de 1 millón de registros: medición sin índices, creación de índices,
+medición con índices y comparación de planes y tiempos. El guion detallado
+está en \texttt{video/README\_guion.md} del repositorio.]}
+
+\subsection{Planes de ejecución (Q5, base 1M)}
+
+\textit{[Pendiente. Capturar la salida de \texttt{EXPLAIN (ANALYZE, BUFFERS)}
+para la consulta Q5 sobre \texttt{bd\_literaria\_1m}, primero sin el índice
+\texttt{idx\_material\_anio} y luego con él. Pegar los resultados aquí.]}
+
+\end{document}

@@ -16,6 +16,8 @@
 secrets/
 secrets.*
 *.secret
+# Config local de Claude Code (puede capturar comandos con credenciales)
+.claude/
 credentials.json
 service-account*.json
 *.pem

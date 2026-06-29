@@ -1,0 +1,221 @@
+\documentclass[10pt,aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usecolortheme{whale}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+
+\definecolor{codebg}{rgb}{0.96,0.96,0.96}
+\lstset{basicstyle=\ttfamily\scriptsize, backgroundcolor=\color{codebg},
+        frame=single, breaklines=true, showstringspaces=false,
+        literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1}
+
+\title[Hito 2 - BD Literaria]{Proyecto Base de Datos I --- Hito 2}
+\subtitle{Implementación, Optimización y Experimentación con Índices}
+\author[Delgado, Guerrero, Melgarejo]{Sergio Delgado \and Antonio Guerrero \and Luciana Melgarejo}
+\institute[UTEC]{Plataforma de catálogo literario}
+\date{Ciclo 2026.1}
+
+\begin{document}
+
+\begin{frame}\titlepage\end{frame}
+
+\begin{frame}{Agenda}
+\tableofcontents
+\end{frame}
+
+\section{El proyecto}
+\begin{frame}{El dominio}
+\begin{columns}
+\begin{column}{0.55\textwidth}
+\textbf{Plataforma de catálogo literario:}
+\begin{itemize}
+  \item Entidad central: \texttt{Material} (libros, ensayos, revistas, poemas, audiolibros).
+  \item Relacionada con autores, géneros, subgéneros, editoriales, premios.
+  \item Interacciones de usuario: \texttt{Likes}, \texttt{Leer} (lecturas), \texttt{Resena}.
+\end{itemize}
+\vspace{0.3cm}
+\textbf{25 tablas} en total: maestras, débiles, subtipos y tablas de relación.
+\end{column}
+\begin{column}{0.45\textwidth}
+\footnotesize
+\textbf{Del Hito 1 al Hito 2:}
+\begin{itemize}
+  \item Hito 1: modelo E-R y relacional.
+  \item Hito 2: implementación física + experimento de índices.
+\end{itemize}
+\end{column}
+\end{columns}
+\end{frame}
+
+\section{Implementación}
+\begin{frame}{Modelamiento físico}
+Tres mecanismos para las restricciones del Hito 1:
+\begin{itemize}
+  \item \textbf{Constraints} de columna/tabla: \texttt{PK}, \texttt{FK}, \texttt{UNIQUE}, \texttt{NOT NULL}, \texttt{CHECK}.
+  \item \textbf{Discriminador} \texttt{Tipo} en \texttt{Material}: herencia total y disjunta.
+  \item \textbf{Triggers} para reglas multi-tabla (4 funciones):
+  \begin{itemize}\footnotesize
+    \item Año de publicación $\geq$ fundación de la editorial.
+    \item Fecha de reseña $\geq$ año del material.
+    \item Todo material con $\geq$1 autor \emph{(trigger diferido)}.
+    \item Todo género con $\geq$1 autor representante \emph{(trigger diferido)}.
+  \end{itemize}
+\end{itemize}
+\vspace{0.2cm}
+Más \textbf{5 vistas} de usuario que encapsulan los \texttt{JOIN} frecuentes.
+\end{frame}
+
+\begin{frame}{Cambios respecto al Hito 1}
+\footnotesize
+Cerramos reglas que el modelo relacional dejaba sin enforcement, sin reinterpretar el dominio:
+\begin{itemize}
+  \item \textbf{[A]} Discriminador \texttt{Tipo}; \textbf{[B][C]} triggers de participación total.
+  \item \textbf{[D]} \texttt{Fecha} en PK de \texttt{Leer} (permite relecturas).
+  \item \textbf{[I]} Nueva tabla \texttt{PerteneceSubGenero} (consulta "por subgénero" que el Hito 1 pedía pero el modelo dejaba imposible).
+  \item \textbf{[J]} Reescritura de Q3 para evitar un producto cartesiano.
+  \item \textbf{[K]} Quitamos índices redundantes con la PK.
+\end{itemize}
+\centering (11 cambios documentados en \texttt{docs/cambios\_respecto\_hito1.md})
+\end{frame}
+
+\begin{frame}{Datos: 4 escenarios reproducibles}
+Generador propio (Python + Faker), carga por \texttt{COPY}, semilla fija.
+\vspace{0.3cm}
+\centering
+\begin{tabular}{lrrr}
+\toprule
+\textbf{Base} & \textbf{Materiales} & \textbf{Likes/Lecturas/Reseñas} & \textbf{Total filas} \\
+\midrule
+1k   &     300 &     1\,000 c/u & $\sim$5 mil \\
+10k  &   2\,000 &    10\,000 c/u & $\sim$46 mil \\
+100k &  20\,000 &   100\,000 c/u & $\sim$484 mil \\
+1m   & 100\,000 & 1\,000\,000 c/u & \textbf{$\sim$3.86 millones} \\
+\bottomrule
+\end{tabular}
+\end{frame}
+
+\section{Experimentación}
+\begin{frame}{Las 5 consultas y la metodología}
+\footnotesize
+\begin{tabular}{lll}
+\toprule
+\textbf{ID} & \textbf{Qué responde} & \textbf{Patrón} \\
+\midrule
+Q1 & Materiales de un autor & igualdad selectiva \\
+Q2 & Materiales de un género & igualdad poco selectiva \\
+Q3 & Materiales más populares & agregación total \\
+Q4 & Historial de un usuario & igualdad + orden \\
+Q5 & Materiales en un \textbf{rango} de años & \textbf{rango (BETWEEN)} \\
+\bottomrule
+\end{tabular}
+\vspace{0.3cm}
+
+\textbf{Metodología:} \texttt{EXPLAIN (ANALYZE, BUFFERS)}, 6 corridas (se descarta la fría, mediana de 5). \texttt{DISCARD ALL} entre corridas. Escenario "sin índices" con \texttt{05\_drop\_indexes.sql}. Se mide con y sin índices en las 4 bases.
+\end{frame}
+
+\begin{frame}{Resultado global (base 1M)}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\centering
+\includegraphics[width=\textwidth]{img/speedup_1m.png}
+\end{column}
+\begin{column}{0.5\textwidth}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+& \textbf{Sin} & \textbf{Con} \\
+\midrule
+Q1 (autor)     &    7.19 &  0.08 \\
+Q5 (rango)     &    9.64 &  0.19 \\
+Q4 (historial) &  131.05 &  8.00 \\
+Q2 (género)    &   34.01 & 22.41 \\
+Q3 (populares) & 2335.55 & 2345.02 \\
+\bottomrule
+\end{tabular}
+\vspace{0.2cm}
+
+\textbf{3 ganan mucho, 1 poco, 1 nada.}
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Q5 --- La consulta por rango (caso estrella)}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth]{img/Q5_por_rango_anio.png}
+\end{column}
+\begin{column}{0.5\textwidth}
+\footnotesize
+\texttt{WHERE Anio\_Publicacion BETWEEN 1900 AND 1905}
+\vspace{0.2cm}
+
+\textbf{Sin índice:} \texttt{Seq Scan} de toda la tabla. Crece con el tamaño.
+
+\textbf{Con índice:} \texttt{Bitmap Index Scan}, toca solo el tramo del rango.
+
+\vspace{0.2cm}
+$\Rightarrow$ \textbf{52× más rápido} en 1M, y casi plano al escalar.
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Q3 --- Cuando el índice NO ayuda}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth]{img/Q3_populares.png}
+\end{column}
+\begin{column}{0.5\textwidth}
+\footnotesize
+Agregación \textbf{total} de likes, lecturas y reseñas: no hay filtro selectivo.
+\vspace{0.2cm}
+
+El motor debe leer las tablas completas con o sin índice.
+\vspace{0.2cm}
+
+\textbf{2335 ms vs 2345 ms} $\to$ 1.0×. Un índice solo ayuda si permite \emph{evitar} leer filas.
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{El índice no es gratis}
+\begin{columns}
+\begin{column}{0.5\textwidth}
+\includegraphics[width=\textwidth]{img/overhead_escritura.png}
+\end{column}
+\begin{column}{0.5\textwidth}
+\footnotesize
+\textbf{Escrituras:} insertar 1M filas con 2 índices que mantener = \textbf{7.6× más lento} (557 ms $\to$ 4228 ms).
+\vspace{0.3cm}
+
+\textbf{Lectura no selectiva forzada:} usar el índice cuando se lee $\sim$100\% de la tabla = \textbf{2.4× más lento} que el \texttt{Seq Scan} (16.6 ms $\to$ 40.5 ms).
+\vspace{0.3cm}
+
+Por eso el planner lo evita: es la decisión correcta.
+\end{column}
+\end{columns}
+\end{frame}
+
+\section{Conclusiones}
+\begin{frame}{Conclusiones}
+\begin{itemize}
+  \item Implementación completa del modelo del Hito 1: tablas, restricciones, triggers y vistas.
+  \item Cuatro volúmenes reproducibles, hasta $\sim$3.86M de filas.
+  \item El experimento confirma los tres comportamientos del índice: gran beneficio (hasta 91×), moderado (1.5×) y nulo (1.0×); más su costo en escritura (7.6×).
+  \item \textbf{Indexar es una decisión por consulta y por selectividad}, no una receta universal.
+  \item Por encima del millón: la arquitectura cliente-servidor basta para consultas selectivas bien indexadas; las agregaciones totales son el límite.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\centering
+\Large ¿Preguntas?
+\vspace{0.5cm}
+
+\footnotesize \url{https://github.com/SefedeamU/Proyecto-BD-Hito-2}
+\end{frame}
+
+\end{document}

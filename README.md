@@ -1,6 +1,13 @@
 # Hito 2 — Base de Datos I
 ## Plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios
 
+**Integrantes:**
+- Sergio Felipe Delgado Amado — 202310227
+- Antonio Jorge Guerrero Cedrón — 202510717
+- Luciana Mylene Melgarejo Quispe — 202420055
+
+**Curso:** Base de Datos I — UTEC, Ciclo 2026.1
+
 Implementación física en PostgreSQL del modelo diseñado en el Hito 1: creación de
 tablas y restricciones, triggers, vistas, carga masiva de datos sintéticos a 4
 escenarios de volumen, e índices para la experimentación de rendimiento.
@@ -21,7 +28,8 @@ proyecto y deben reflejarse en el informe.
 ├── docs/
 │   ├── hito1.pdf                 # entrega previa (modelo E-R y relacional)
 │   ├── cambios_respecto_hito1.md # constancia de cambios del modelo físico
-│   └── informe_hito2.tex         # informe final (LaTeX)
+│   ├── informe_hito2.tex/.pdf    # informe final (LaTeX + compilado)
+│   └── diapositivas_hito2.tex/.pdf # diapositivas de la exposición
 ├── sql/
 │   ├── 00_reset.sql              # reset por DROP SCHEMA (requiere ser dueño)
 │   ├── 00_reset_guest.sql        # reset "guest-safe" (borra solo nuestros objetos)
@@ -30,11 +38,13 @@ proyecto y deben reflejarse en el informe.
 │   ├── 03_views.sql              # vistas de usuario
 │   ├── 04_indexes.sql            # índices secundarios del experimento
 │   ├── 05_drop_indexes.sql       # elimina los secundarios (medir "sin índices")
-│   └── 06_experiments.sql        # las 4 consultas con EXPLAIN (ANALYZE, BUFFERS)
-├── querys/                       # las 4 consultas limpias (para revisión directa)
+│   ├── 06_experiments.sql        # las 5 consultas con EXPLAIN (ANALYZE, BUFFERS)
+│   └── 07_index_overhead.sql     # demo de cuándo el índice PERJUDICA
+├── querys/                       # las 5 consultas limpias (para revisión directa)
 ├── faker/                        # proyecto de poblamiento (ver faker/README.md)
 ├── dumps/                        # dumps restaurables de las 4 bases
-├── results/                      # mediciones (tiempos con/sin índices)
+├── results/                      # resultados_experimento.csv (tiempos con/sin índices)
+├── video/                        # guion del video de demostración
 └── Api-Frontend-(Bonus)/         # API + frontend de demostración
 ```
 
@@ -65,6 +75,7 @@ Resumen:
 | I | Nueva tabla `PerteneceSubGenero` + vista | habilitar "materiales por subgénero" |
 | J | Reescritura de la Consulta 3 | eliminar producto cartesiano del benchmark |
 | K | Quitar índices redundantes con la PK | evitar índices que dan 0% de mejora |
+| L | Nueva Consulta 5 por **rango** de años (`BETWEEN`) | requisito del profesor: demostrar índice B-tree en predicados de rango |
 
 Decisiones de **NO cambiar** (fidelidad al Hito 1): PK compuesta de `Usuario`,
 tablas de subtipo, validación temporal solo del lado "hijo". Nota: cualquier

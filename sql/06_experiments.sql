@@ -91,3 +91,19 @@ JOIN Material m ON m.Id = le.Material_Id
 WHERE u.Username = 'usuario1'              -- :username
   AND u.Email    = 'usuario1@mail.com'     -- :email
 ORDER BY le.Fecha DESC;
+
+
+-- ---------------------------------------------------------------------
+-- CONSULTA 5: Materiales publicados en un RANGO de años (consulta por rango).
+-- [Cambio L] Consulta agregada en el Hito 2 a pedido del profesor: al menos
+-- una consulta debe filtrar por RANGO para demostrar las bondades de un
+-- índice B-tree sobre predicados BETWEEN. Índice: idx_material_anio.
+--   Rango selectivo (años tempranos, escasos) -> el planner usa Bitmap Index
+--   Scan y gana ~52x en 1M. Para un rango amplio el planner vuelve a Seq Scan
+--   a propósito (crossover por selectividad), lo cual también es un resultado.
+-- ---------------------------------------------------------------------
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
+FROM Material m
+WHERE m.Anio_Publicacion BETWEEN 1900 AND 1905   -- :anio_desde / :anio_hasta
+ORDER BY m.Anio_Publicacion;
