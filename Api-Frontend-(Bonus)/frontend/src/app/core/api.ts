@@ -3,21 +3,17 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Material, MaterialDetalle, Popular, Resena, Usuario, HistorialItem, SearchResult, Options } from './models';
 
-// Base del API. Orden de resolución (sin recompilar):
-//  1) window.__API_BASE__  -> override manual (editable en dist/index.html).
-//  2) Si la app se abre en localhost/127.0.0.1/file:// pero el backend NO está
-//     local, se apunta al API desplegado (AWS, puerto 7000). Así el `ng serve`
-//     de desarrollo consume la API real sin levantar el backend en la laptop.
-//  3) En cualquier otro host (ej. servida desde el propio servidor) usa ese
-//     mismo host en el puerto 7000.
+// Base del API. La API vive SIEMPRE en la EC2 (puerto 7000), aunque el front se
+// sirva desde otro host (S3 estático, localhost, etc.). Por eso NO se deduce del
+// host de la página: se apunta directo a la EC2. El front S3 es HTTP y el 7000
+// es público y HTTP, así que no hay contenido mixto.
+// Override sin recompilar: define window.__API_BASE__ en dist/index.html (por si
+// cambia la IP o se sirve la API tras un dominio/proxy).
 const DEPLOYED_API = 'http://18.214.247.229:7000/api';
 
 function resolveApiBase(): string {
   const override = (globalThis as { __API_BASE__?: string }).__API_BASE__;
-  if (override) return override;
-  const host = typeof location !== 'undefined' ? location.hostname : '';
-  if (!host || host === 'localhost' || host === '127.0.0.1') return DEPLOYED_API;
-  return `http://${host}:7000/api`;
+  return override || DEPLOYED_API;
 }
 
 const API = resolveApiBase();

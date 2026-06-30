@@ -10,9 +10,9 @@
     <div class="db-select" title="Base de datos sobre la que se hacen TODAS las consultas">
       <span class="db-ico" aria-hidden="true">🗄️</span>
       <label class="sr-only" for="db">Base de datos</label>
-      <select id="db" [value]="dbcfg.db()" (change)="onDbChange($any($event.target).value)">
+      <select id="db" (change)="onDbChange($any($event.target).value)">
         @for (d of dbcfg.databases; track d.value) {
-          <option [value]="d.value">{{ d.label }} · {{ d.hint }}</option>
+          <option [value]="d.value" [selected]="d.value === dbcfg.db()">{{ d.label }} · {{ d.hint }}</option>
         }
       </select>
     </div>
