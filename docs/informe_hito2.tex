@@ -2179,9 +2179,50 @@ demuestra el comportamiento de un índice B-tree sobre predicados de rango.
 
 \subsection{El costo de los índices}
 
-\textit{[Pendiente. El script \texttt{sql/07\_index\_overhead.sql} mide el
-costo en escrituras y en lecturas no selectivas. Ejecutarlo sobre
-\texttt{bd\_literaria\_1m} y completar con los resultados.]}
+Los índices no son gratis. El script \texttt{sql/07\_index\_overhead.sql} mide,
+sobre \texttt{bd\_literaria\_1m}, los dos casos en que un índice secundario
+\emph{perjudica}: las escrituras y las lecturas no selectivas.
+
+\paragraph{El índice encarece las escrituras.}
+Insertar 1\,000\,000 de filas con dos índices que mantener es mucho más lento,
+porque cada \texttt{INSERT} debe actualizar también cada estructura B-tree. Por
+eso el generador de datos carga \emph{sin} índices secundarios y los crea
+después.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Caso (INSERT de 1M filas)} & \textbf{Tiempo} \\
+\midrule
+Sin índices secundarios          & $\approx 1\,130$~ms \\
+Con 2 índices que mantener       & $\approx 5\,640$~ms \;(\textbf{$\approx 5\times$ más lento}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\paragraph{Una lectura no selectiva con el índice forzado es más lenta.}
+Cuando el filtro abarca casi toda la tabla
+(\texttt{SELECT * FROM material WHERE anio\_publicacion >= 1900}, $\approx 100\%$
+de las filas), recorrer el índice y saltar al \textit{heap} con accesos
+aleatorios cuesta más que un \texttt{Seq Scan} secuencial. El planner, con buen
+criterio, ignora el índice; aquí se fuerza con \texttt{enable\_seqscan=off} solo
+para demostrarlo.
+
+\begin{center}
+\begin{tabular}{lr}
+\toprule
+\textbf{Plan (lectura del $\approx 100\%$)} & \textbf{Tiempo} \\
+\midrule
+\texttt{Seq Scan} (lo que elige el planner)              & $\approx 139$~ms \\
+\texttt{Index Scan} forzado (\texttt{enable\_seqscan=off}) & $\approx 171$~ms \;(\textbf{$\approx 23\%$ más lento}) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+En conjunto, el índice \textbf{ayuda} en las consultas selectivas (Q1, Q3, Q4),
+es \textbf{casi indiferente} en la agregación total (Q2) y \textbf{perjudica} en
+las escrituras y en las lecturas no selectivas: indexar es una decisión por
+consulta y por selectividad, no una receta universal.
 
 
 \subsection{Complejidad al escalar por encima del millón (extra)}
