@@ -120,7 +120,7 @@ Q4 & Usuarios con reseñas destacadas por rango de años & \textbf{rango (BETWEE
 \begin{columns}
 \begin{column}{0.5\textwidth}
 \centering
-\includegraphics[width=\textwidth]{img/speedup_1m.png}
+\IfFileExists{img/speedup_1m.png}{\includegraphics[width=\textwidth]{img/speedup_1m.png}}{\fbox{\parbox{0.9\textwidth}{\centering\footnotesize Q3 $-53\%$ · Q2 $-25\%$ · Q1 $-24\%$ · Q4 $-21\%$ (mejora del índice en 1M)}}}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
@@ -145,7 +145,7 @@ Q4 (rango años)    & 3831 & 3038 & $-21\%$ \\
 \begin{frame}{Q4 --- La consulta por rango (caso estrella)}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\textwidth]{img/Q4_usuarios_resenas_destacadas.png}
+\IfFileExists{img/plan_q4_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q4_1m_con.png}}{\fbox{\parbox{0.9\textwidth}{\centering\footnotesize Plan Q4 con índice (1M): \texttt{idx\_material\_anio}}}}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
@@ -165,7 +165,7 @@ $\Rightarrow$ en 1M baja de \textbf{3831 a 3038 ms} ($-21\%$); el resto del cost
 \begin{frame}{Q2 --- Cuando el índice ayuda poco}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\textwidth]{img/Q2_materiales_populares.png}
+\IfFileExists{img/plan_q2_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q2_1m_con.png}}{\fbox{\parbox{0.9\textwidth}{\centering\footnotesize Plan Q2 con índice (1M): agregación total}}}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
@@ -183,7 +183,7 @@ El motor debe recorrer las tablas completas; el índice solo recorta el escaneo 
 \begin{frame}{El índice no es gratis}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\textwidth]{img/overhead_escritura.png}
+\IfFileExists{img/overhead_escritura.png}{\includegraphics[width=\textwidth]{img/overhead_escritura.png}}{\fbox{\parbox{0.9\textwidth}{\centering\footnotesize INSERT 1M: 557 ms (sin índice) vs 4228 ms (con 2 índices) $\approx$ 7.6$\times$}}}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize

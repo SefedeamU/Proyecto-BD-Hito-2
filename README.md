@@ -28,8 +28,9 @@ proyecto y deben reflejarse en el informe.
 ├── docs/
 │   ├── hito1.pdf                 # entrega previa (modelo E-R y relacional)
 │   ├── cambios_respecto_hito1.md # constancia de cambios del modelo físico
-│   ├── informe_hito2.tex/.pdf    # informe final (LaTeX + compilado)
-│   └── diapositivas_hito2.tex/.pdf # diapositivas de la exposición
+│   ├── informe_hito2.tex         # informe final en LaTeX (compilar en Overleaf)
+│   ├── diapositivas_hito2.tex    # diapositivas de la exposición (LaTeX)
+│   └── img/                      # planes EXPLAIN del experimento (capturas)
 ├── sql/
 │   ├── 00_reset.sql              # reset por DROP SCHEMA (requiere ser dueño)
 │   ├── 00_reset_guest.sql        # reset "guest-safe" (borra solo nuestros objetos)

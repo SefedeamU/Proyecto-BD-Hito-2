@@ -1,5 +1,8 @@
 \documentclass[12pt,a4paper]{article}
 
+% -------------------------------------------------
+% Paquetes básicos
+% -------------------------------------------------
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish,es-tabla]{babel}
@@ -19,132 +22,1505 @@
 \usepackage{caption}
 \usepackage{listings}
 \usepackage{multirow}
+\usepackage[normalem]{ulem}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{groupplots}
+\definecolor{barSin}{RGB}{200,45,45}
+\definecolor{barCon}{RGB}{40,150,72}
 
+
+% -------------------------------------------------
+% Configuración general
+% -------------------------------------------------
 \geometry{margin=2.5cm}
 \setlength{\parskip}{0.6em}
 \setlength{\parindent}{0pt}
 
-\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, citecolor=blue}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    urlcolor=blue,
+    citecolor=blue
+}
 
-\titleformat{\section}{\normalfont\Large\bfseries}{\thesection.}{0.5em}{}
-\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection.}{0.5em}{}
-\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{\thesubsubsection.}{0.5em}{}
+\titleformat{\section}
+  {\normalfont\Large\bfseries}
+  {\thesection.}{0.5em}{}
 
+\titleformat{\subsection}
+  {\normalfont\large\bfseries}
+  {\thesubsection.}{0.5em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries}
+  {\thesubsubsection.}{0.5em}{}
+
+
+
+
+% Estilo para bloques de codigo SQL
 \definecolor{codebg}{rgb}{0.96,0.96,0.96}
 \definecolor{codekw}{rgb}{0.0,0.0,0.6}
 \definecolor{codecomment}{rgb}{0.0,0.5,0.0}
 \lstdefinestyle{sql}{
-  language=SQL,
-  backgroundcolor=\color{codebg},
-  basicstyle=\ttfamily\footnotesize,
-  keywordstyle=\color{codekw}\bfseries,
-  commentstyle=\color{codecomment}\itshape,
-  breaklines=true,
-  frame=single,
-  rulecolor=\color{gray!40},
-  showstringspaces=false,
-  morekeywords={EXPLAIN,ANALYZE,BUFFERS,BIGINT,VARCHAR,INTEGER,BETWEEN,COALESCE,NUMERIC,DEFERRABLE,DEFERRED},
-  literate={á}{{\'{a}}}1 {é}{{\'{e}}}1 {í}{{\'{i}}}1 {ó}{{\'{o}}}1 {ú}{{\'{u}}}1
-           {ñ}{{\~{n}}}1 {Á}{{\'{A}}}1 {É}{{\'{E}}}1 {Ó}{{\'{O}}}1 {Ú}{{\'{U}}}1 {Ñ}{{\~{N}}}1
+  language=SQL, backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize, keywordstyle=\color{codekw}\bfseries,
+  commentstyle=\color{codecomment}\itshape, breaklines=true,
+  frame=single, rulecolor=\color{gray!40}, showstringspaces=false,
+  morekeywords={EXPLAIN,ANALYZE,BUFFERS,BIGINT,VARCHAR,INTEGER,BETWEEN,COALESCE,DISTINCT,EXTRACT,YEAR,LIMIT,AVG,COUNT},
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1 {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1 {Ñ}{{\~N}}1
 }
 \lstset{style=sql}
 
+% -------------------------------------------------
+% Datos del documento
+% -------------------------------------------------
+\title{\textbf{Proyecto de Base de Datos I}\\
+\large Hito 1 y 2: Modelado, Implementación en PostgreSQL y Experimentación con Índices}
+\author{
+    Integrantes: \\
+    \textit{Sergio Felipe Delgado Amado 202310227} \\
+    \textit{Antonio Jorge Guerrero Cedrón 202510717} \\
+    \textit{Luciana Mylene Melgarejo Quispe    202420055}
+}
+\date{Ciclo 2026.1}
+
 \begin{document}
 
-% ------------------------------------------------------------------
-% PORTADA
-% ------------------------------------------------------------------
-\thispagestyle{empty}
+% -------------------------------------------------
+% Portada Personalizada (Todo en una sola página)
+% -------------------------------------------------
+\thispagestyle{empty} % Oculta el número de página en la portada
+
 \begin{center}
-\vspace*{1cm}
-{\Large \bfseries Universidad de Ingeniería y Tecnología --- UTEC}\\[1.2cm]
-{\Large \bfseries Proyecto de Base de Datos I}\\[0.3cm]
-{\large Hito 2: Implementación en PostgreSQL, Optimización y Experimentación con Índices}\\[1.2cm]
+    % 1. Logo en la parte superior
+    \IfFileExists{imagen_2026-05-22_144109386.png}{
+        \includegraphics[width=0.55\textwidth]{imagen_2026-05-22_144109386.png} \\[1.2cm]
+    }{\vspace{1.2cm}}
 
-\textbf{Curso:} Base de Datos I\\
-\textbf{Profesor:} Wilder Nina Choquehuayta\\   % <-- confirmar con el profe real
-\textbf{Tema:} Plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios\\[1.2cm]
+    % 2. Título Principal
+    {\Large \bfseries Proyecto de Base de Datos I} \\[0.3cm]
+    {\large Hito 1 y 2: Modelado, Implementación en PostgreSQL y Experimentación con Índices} \\[1.2cm]
 
-\textbf{Integrantes:}\\[0.2cm]
-\textit{Sergio Felipe Delgado Amado --- 202310227}\\
-\textit{Antonio Jorge Guerrero Cedrón --- 202510717}\\
-\textit{Luciana Mylene Melgarejo Quispe --- 202420055}\\[1.2cm]
+    \textbf{Curso:} Base de Datos I \\
+    \textbf{Profesor:} Wilder Nina Choquehuayta \\
+    \textbf{Tema del proyecto:} Plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios \\[1.2cm]
 
-\textbf{Repositorio:}
-\href{https://github.com/SefedeamU/Proyecto-BD-Hito-2}{github.com/SefedeamU/Proyecto-BD-Hito-2}
+    % 3. Sección de Integrantes
+    \textbf{Integrantes:} \\[0.2cm]
+    \textit{Sergio Felipe Delgado Amado --- 202310227} \\
+    \textit{Antonio Jorge Guerrero Cedrón --- 202510717} \\
+    \textit{Luciana Mylene Melgarejo Quispe --- 202420055} \\[1.2cm]
 
-\vfill
-{\large Ciclo 2026.1}
+    % 4. Información de la Asignatura
+
+
+    % 5. Ciclo académico al fondo de la página
+    \vfill
+    {\large Ciclo 2026.1}
 \end{center}
 
 \newpage
 \tableofcontents
 \newpage
 
-% ------------------------------------------------------------------
-\section*{Sobre este informe}
-\addcontentsline{toc}{section}{Sobre este informe}
+% =================================================
+\section{Requisitos}
 
-Este documento corresponde al Hito 2 del proyecto. El Hito 1 (requisitos,
-modelo E-R y modelo relacional) se entregó por separado y no se reproduce
-aquí. El esquema implementado parte directamente de ese modelo; los ajustes
-que fue necesario hacer al pasar al código se explican en la
-Sección~\ref{sec:cambios} y están todos documentados en
-\texttt{docs/cambios\_respecto\_hito1.md} dentro del repositorio.
+% -------------------------------------------------
+\subsection{Introducción}
+El presente proyecto propone el diseño de una base de datos para una plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios y culturales. El sistema permitirá administrar información detallada sobre diversos materiales (como libros, ensayos, revistas, poemas y audiolibros), así como de sus autores, géneros, subgéneros, editoriales, premios, ilustraciones y curiosidades. Además, la plataforma registrará la interacción de los usuarios mediante un historial de lectura, listas de favoritos (likes) y reseñas.
 
-El dominio es una plataforma de catálogo literario. La entidad central es
-\texttt{Material}, que representa libros, ensayos, revistas, poemas y
-audiolibros, y se relaciona con autores, géneros, subgéneros, editoriales,
-premios, ilustraciones, curiosidades, reseñas, likes e historial de lectura.
 
-% ==================================================================
+La base de datos será diseñada para representar las entidades principales del dominio y sus relaciones semánticas, de modo que permita almacenar información estructurada, evitar redundancias innecesarias, facilitar consultas frecuentes y servir como base para una futura implementación en PostgreSQL.
+
+% -------------------------------------------------
+\subsection{Descripción general del problema, organización o empresa}
+
+La organización cliente requiere una plataforma que funcione como un catálogo digital de materiales literarios. Actualmente, la información sobre libros, autores, géneros, editoriales, premios y reseñas suele encontrarse dispersa en diferentes fuentes, tales como hojas de cálculo, documentos, páginas web, catálogos físicos o registros no centralizados.
+
+Esta dispersión dificulta realizar consultas rápidas, comparar materiales, conocer la popularidad de un autor o género, identificar los materiales más leídos, revisar reseñas de usuarios o consultar qué premios ha recibido determinado material.
+
+Por ello, se requiere una base de datos que centralice la información y permita administrar tanto los datos bibliográficos como la interacción de los usuarios con los materiales.
+
+% -------------------------------------------------
+\subsection{Necesidad y usos de la base de datos}
+
+
+
+La base de datos será utilizada para almacenar, organizar y consultar información sobre el catálogo de la plataforma de materiales literarios y su interacción con los usuarios. Los principales usos esperados son los siguientes:
+
+\begin{itemize}
+    \item Registrar materiales literarios de distintos tipos: libros, ensayos, revistas, poemas y audiolibros.
+    \item Asociar materiales con autores, géneros, subgéneros, editoriales, premios y clasificación por edad.
+    \item Permitir que los usuarios registren lecturas, den likes y publiquen reseñas.
+    \item Implementar un sistema de clasificación por edad (\textit{AgeRate}) con advertencias detalladas (\textit{Warnings}) y métricas específicas de contenido.
+    \item Consultar materiales por título, autor, género, subgénero, editorial, premio o clasificación por edad..
+    \item Consultar información adicional de los materiales, como ilustraciones y curiosidades.
+    \item Servir como base para futuras consultas SQL, optimización con índices y experimentación con grandes volúmenes de datos.
+\end{itemize}
+
+% -------------------------------------------------
+\subsection{¿Cómo se resuelve el problema hoy?}
+
+Actualmente, la información puede encontrarse en fuentes independientes y no necesariamente normalizadas. Por ejemplo, los datos de materiales pueden estar en catálogos web, los datos de autores en páginas externas, las reseñas en redes sociales o plataformas de lectura, y los premios en listados separados.
+
+Esto genera problemas como:
+
+\begin{itemize}
+    \item Duplicidad de información.
+    \item Dificultad para mantener datos actualizados.
+    \item Falta de relación clara entre autores, materiales, géneros, editoriales y usuarios.
+    \item Dificultad para realizar consultas complejas.
+    \item Ausencia de una estructura formal que permita análisis estadístico.
+\end{itemize}
+
+% -------------------------------------------------
+\subsubsection{¿Cómo se almacenan y procesan los datos hoy?}
+
+En el escenario actual, los datos podrían almacenarse de forma manual en hojas de cálculo, documentos, formularios o registros independientes. La información puede ser actualizada manualmente por administradores o recopilada desde fuentes públicas.
+
+El procesamiento de datos se realiza de manera limitada, ya que no existe una base de datos relacional que permita cruzar entidades como usuarios, materiales, autores, géneros, reseñas y likes.
+
+% -------------------------------------------------
+\subsubsection{Flujo de datos}
+
+El flujo general de datos esperado para el sistema es el siguiente:
+
+\begin{enumerate}
+    \item Un administrador registra un nuevo material en el catálogo.
+    \item El material se asocia con uno o más autores.
+    \item El material se clasifica según género, subgénero y clasificación por edad.
+    \item El material puede asociarse con una editorial, premios, ilustraciones y curiosidades.
+    \item Los usuarios consultan el catálogo.
+    \item Los usuarios revisan lecturas, dan likes y publican reseñas.
+\end{enumerate}
+
+% -------------------------------------------------
+\subsection{Descripción detallada del sistema}
+
+% -------------------------------------------------
+\subsubsection{Objetos de información actuales}
+Los principales objetos de información identificados a partir de las reglas semánticas son:
+\begin{itemize}
+    \item \textbf{Usuario:} Visitantes registrados con identificadores únicos, requisitos de edad y rol funcional dentro del sistema.
+    \item \textbf{Material:} Recurso principal (identificado por un ID), con atributos como páginas, año e idioma.
+    \item \textbf{Libro:} Subtipo de material correspondiente a obras literarias extensas.
+    \item \textbf{Ensayo:} Subtipo de material correspondiente a textos argumentativos o reflexivos.
+    \item \textbf{Revista:} Subtipo de material correspondiente a publicaciones periódicas.
+    \item \textbf{Poema:} Subtipo de material correspondiente a composiciones poéticas.
+    \item \textbf{AudioBook:} Subtipo de material correspondiente a materiales en formato de audio.
+    \item \textbf{Editorial:} Empresa que publica los materiales.
+    \item \textbf{Autor:} Escritor de los materiales.
+    \item \textbf{Género y Subgénero:} Clasificación temática de las obras.
+    \item \textbf{AgeRate y Warning:} Clasificación de edad y nivel de contenido sensible.
+    \item \textbf{Premio:} Reconocimientos otorgados a los materiales.
+    \item \textbf{Curiosidad e Ilustración:} Datos y recursos visuales adicionales de los materiales.
+    \item \textbf{Reseña:} Opiniones cuantificables de los usuarios sobre un material.
+\end{itemize}
+% -------------------------------------------------
+\subsubsection{Características y funcionalidades esperadas}
+El sistema debe permitir las siguientes funcionalidades:
+\begin{itemize}
+    \item \textbf{Gestión de Catálogo:} Registro de diversos tipos de materiales, editoriales y autores, garantizando restricciones temporales (ej. el año de publicación no puede ser anterior a la fundación de la editorial).
+    \item \textbf{Clasificación de Contenido:} Implementación estricta del sistema \textit{AgeRate} para cada material.
+    \item \textbf{Interacción del Usuario:} Registro de usuarios , mantenimiento de historial de lectura con fechas, sistema de favoritos y creación de reseñas.
+    \item \textbf{Gestión de Metadatos:} Asociación de premios, ilustraciones y curiosidades a los materiales correspondientes.
+\end{itemize}
+
+
+% -------------------------------------------------
+% -------------------------------------------------
+\subsubsection{Tipos de usuarios existentes o necesarios}
+
+El sistema considera distintos tipos de usuarios desde el punto de vista funcional. Estos tipos no se modelan como entidades separadas ni como una jerarquía de herencia en el diagrama Entidad-Relación. En esta primera versión del proyecto, los roles se manejarán mediante un atributo \texttt{Rol} dentro de la entidad \textbf{Usuario}.
+
+\begin{longtable}{p{4cm} p{10cm}}
+\toprule
+\textbf{Tipo de usuario} & \textbf{Descripción} \\
+\midrule
+\endhead
+
+Administrador & Usuario encargado de registrar, modificar y mantener la información del catálogo, incluyendo materiales, autores, géneros, editoriales, premios, ilustraciones y curiosidades. \\
+
+Usuario registrado & Persona que utiliza la plataforma para consultar materiales, registrar lecturas, dar likes y publicar reseñas. \\
+
+Usuario visitante & Persona que puede consultar el catálogo de materiales, autores, géneros y reseñas públicas, pero no puede registrar interacciones como likes, lecturas o reseñas. \\
+
+\bottomrule
+\end{longtable}
+
+\vspace{0.2cm}
+
+\noindent\fcolorbox{gray!60}{gray!10}{
+\begin{minipage}{0.95\textwidth}
+\textbf{Aclaración sobre el modelado de roles:}
+
+En el modelo Entidad-Relación propuesto no se representa una herencia entre tipos de usuario, ya que en esta primera versión no se consideran entidades especializadas como \textit{Administrador}, \textit{Usuario registrado} o \textit{Usuario visitante}. En su lugar, el sistema manejará los permisos y diferencias funcionales mediante un atributo \texttt{Rol} en la entidad \textbf{Usuario}.
+
+De esta manera, un usuario registrado podrá tener un rol asociado, por ejemplo: \texttt{Administrador} o \texttt{Registrado}. El usuario visitante se interpreta como un perfil de acceso sin registro completo en el sistema, por lo que no necesariamente requiere almacenarse como una entidad independiente.
+
+Esta decisión permite mantener el modelo inicial más simple y coherente con el alcance del Hito 1. En futuras versiones del proyecto, como una segunda entrega, este diseño podría mejorarse mediante una entidad específica de roles, una tabla de permisos o una especialización más detallada si el sistema requiere mayor control de acceso.
+\end{minipage}
+}
+
+% -------------------------------------------------
+\subsubsection{Tipos de consultas y actualizaciones}
+
+El sistema deberá soportar consultas como las siguientes:
+
+\begin{itemize}
+    \item Buscar materiales por título.
+    \item Listar materiales por género.
+    \item Listar materiales por subgénero.
+    \item Consultar materiales escritos por un autor.
+    \item Consultar materiales publicados por una editorial.
+    \item Consultar materiales que ganaron un premio específico.
+    \item Consultar los materiales con mayor cantidad de likes.
+    \item Consultar las reseñas de un material.
+    \item Consultar materiales según clasificación por edad.
+\end{itemize}
+
+El sistema deberá soportar actualizaciones como las siguientes:
+
+\begin{itemize}
+    \item Registrar nuevos usuarios.
+    \item Registrar nuevos materiales.
+    \item Modificar información de materiales existentes.
+    \item Registrar autores, géneros, subgéneros, editoriales y premios.
+    \item Asociar autores con materiales.
+    \item Asociar materiales con géneros, editoriales, premios y clasificación por edad.
+    \item Registrar likes de usuarios.
+    \item Registrar reseñas de usuarios.
+\end{itemize}
+
+% -------------------------------------------------
+% -------------------------------------------------
+\subsubsection{Tamaño estimado de la base de datos}
+
+Para estimar el tamaño de la base de datos se considera un escenario de producción realista, en el cual la plataforma funciona como un catálogo digital de gran escala para materiales literarios, similar en concepto a una plataforma de descubrimiento y consumo de contenido, pero limitada únicamente a las funcionalidades definidas en el presente modelo: registro de materiales, autores, géneros, subgéneros, editoriales, premios, clasificaciones por edad, ilustraciones, curiosidades, usuarios, likes, reseñas e historial de lectura.
+
+Es importante precisar que esta estimación corresponde únicamente a la base de datos relacional. No se incluye el almacenamiento de archivos pesados, como libros completos en PDF, EPUB, audiolibros, imágenes originales en alta resolución o archivos multimedia, ya que el alcance del modelo contempla principalmente metadatos, relaciones e interacciones de usuarios.
+
+\begin{longtable}{p{4cm} p{3.2cm} p{3.5cm} p{3.5cm}}
+\toprule
+\textbf{Objeto de información} & \textbf{Volumen estimado en producción} & \textbf{Crecimiento esperado} & \textbf{Justificación} \\
+\midrule
+\endhead
+
+Usuarios & 1 000 000 registros & Alto & Una plataforma pública puede acumular una gran cantidad de usuarios registrados conforme aumenta su adopción. \\
+
+Materiales & 500 000 registros & Medio & Incluye libros, ensayos, revistas, poemas y audiolibros registrados como materiales dentro del catálogo. \\
+
+Autores & 250 000 registros & Medio & Un catálogo amplio puede incluir autores clásicos, contemporáneos, coautores y autores de distintos países. \\
+
+Géneros & 100 registros & Bajo & La cantidad de géneros principales suele ser limitada y relativamente estable. \\
+
+Subgéneros & 1 000 registros & Bajo a medio & Puede crecer conforme se refinan las categorías literarias y temáticas del catálogo. \\
+
+Editoriales & 20 000 registros & Medio & El catálogo puede incluir editoriales grandes, independientes, universitarias y regionales. \\
+
+Premios & 5 000 registros & Bajo a medio & Incluye premios literarios nacionales, internacionales y por categoría. \\
+
+AgeRate & 20 registros & Bajo & Las clasificaciones por edad son reducidas y se mantienen relativamente estables. \\
+
+Warnings & 500 registros & Bajo & Cada clasificación puede tener varias advertencias o descripciones de contenido sensible. \\
+
+Ilustraciones & 1 000 000 registros & Medio & Un material puede tener ilustraciones, portadas o referencias visuales asociadas. \\
+
+Curiosidades & 1 000 000 registros & Medio & Se almacenan datos adicionales o curiosidades vinculadas a materiales. \\
+
+Reseñas & 10 000 000 registros & Alto & Las reseñas crecen según la actividad de los usuarios sobre los materiales. \\
+
+Likes & 50 000 000 registros & Alto & Los likes representan una interacción simple y frecuente, por lo que pueden crecer rápidamente. \\
+
+Lecturas & 100 000 000 registros & Muy alto & Cada registro representa una lectura realizada por un usuario sobre un material en una fecha determinada. \\
+
+Relaciones Material-Autor & 1 000 000 registros & Medio & Permite representar coautorías y múltiples materiales por autor. \\
+
+Relaciones Material-Género & 1 500 000 registros & Medio & Un material puede pertenecer a más de un género o clasificación temática. \\
+
+Relaciones Material-Premio & 100 000 registros & Bajo & Solo una parte del catálogo estará asociada a premios. \\
+
+Relaciones Material-Ilustración & 2 000 000 registros & Medio & Permite asociar ilustraciones con uno o varios materiales. \\
+
+\bottomrule
+\end{longtable}
+
+Para aproximar el peso de la base de datos se considera el tamaño promedio de cada fila, incluyendo sus atributos principales, llaves primarias, llaves foráneas y un margen adicional por índices, alineamiento interno y sobrecarga propia del sistema gestor de base de datos. La estimación no busca ser exacta a nivel de bytes, sino ofrecer una referencia razonable para dimensionar infraestructura en un escenario real.
+
+\begin{longtable}{p{4cm} p{3cm} p{3cm} p{3.5cm}}
+\toprule
+\textbf{Objeto de información} & \textbf{Registros estimados} & \textbf{Tamaño promedio estimado} & \textbf{Peso aproximado} \\
+\midrule
+\endhead
+
+Usuarios & 1 000 000 & 350 bytes & 0.35 GB \\
+
+Materiales & 500 000 & 300 bytes & 0.15 GB \\
+
+Autores & 250 000 & 300 bytes & 0.08 GB \\
+
+Editoriales & 20 000 & 250 bytes & 0.01 GB \\
+
+Géneros y Subgéneros & 1 100 & 250 bytes & Menor a 0.01 GB \\
+
+Premios & 5 000 & 200 bytes & Menor a 0.01 GB \\
+
+AgeRate y Warnings & 520 & 250 bytes & Menor a 0.01 GB \\
+
+Ilustraciones & 1 000 000 & 300 bytes & 0.30 GB \\
+
+Curiosidades & 1 000 000 & 550 bytes & 0.55 GB \\
+
+Reseñas & 10 000 000 & 700 bytes & 7.00 GB \\
+
+Likes & 50 000 000 & 80 bytes & 4.00 GB \\
+
+Lecturas & 100 000 000 & 100 bytes & 10.00 GB \\
+
+Relaciones intermedias & 4 600 000 & 100 bytes & 0.46 GB \\
+
+\bottomrule
+\end{longtable}
+
+Sumando únicamente los datos principales, la base de datos podría ocupar aproximadamente entre \textbf{23 GB y 25 GB}. Sin embargo, en un sistema relacional real se debe considerar espacio adicional para índices, claves primarias, claves foráneas, páginas internas, estadísticas, mantenimiento, crecimiento futuro y almacenamiento temporal usado por consultas complejas.
+
+Por ello, se recomienda aplicar un factor de crecimiento entre 2.5 y 4 veces sobre el tamaño lógico estimado. Bajo ese criterio, un escenario de producción inicial debería considerar aproximadamente:
+
+\begin{itemize}
+    \item \textbf{25 GB} de datos lógicos aproximados.
+    \item \textbf{60 GB a 100 GB} considerando índices, sobrecarga interna y crecimiento de corto plazo.
+    \item \textbf{150 GB a 250 GB} como capacidad prudente para una primera infraestructura de producción con margen de crecimiento.
+\end{itemize}
+
+Desde el punto de vista de infraestructura, una base de datos PostgreSQL en producción para este escenario debería iniciar con almacenamiento SSD de al menos \textbf{150 GB}, preferiblemente ampliable, ya que las tablas de interacción como \texttt{Leer}, \texttt{Likes} y \texttt{Reseña} serían las principales responsables del crecimiento. Estas tablas también serían candidatas a optimización mediante índices sobre llaves foráneas y campos de consulta frecuente, especialmente \texttt{Material.Id}, \texttt{Usuario.Username}, \texttt{Usuario.Email} y \texttt{Fecha}.
+
+En conclusión, aunque las entidades de catálogo como materiales, autores, géneros, editoriales y premios tienen un crecimiento controlado, las interacciones de usuario pueden aumentar rápidamente en un entorno real. Por ello, el diseño debe prever que el mayor consumo de almacenamiento y el mayor costo de consulta provendrán principalmente del historial de lecturas, likes y reseñas.
+
+% -------------------------------------------------
+% -------------------------------------------------
+\subsubsection{Velocidades de respuesta esperadas}
+
+Desde la perspectiva del cliente, el sistema debe ofrecer tiempos de respuesta razonables para las operaciones más frecuentes de consulta y actualización. Estas velocidades esperadas se definen considerando el modelo Entidad-Relación propuesto, donde la información principal se concentra en entidades como \texttt{Material}, \texttt{Usuario}, \texttt{Autor}, \texttt{Genero}, \texttt{Editorial}, \texttt{Premio}, \texttt{Reseña}, \texttt{AgeRate}, \texttt{Ilustracion} y \texttt{Curiosidad}, junto con relaciones de interacción como \texttt{Leer}, \texttt{Likes}, \texttt{Escribe}, \texttt{Pertenece}, \texttt{Ganar}, \texttt{Contiene} y \texttt{Tiene}.
+
+Los tiempos propuestos no representan una medición real de implementación, sino una meta de rendimiento para una futura base de datos en producción, especialmente al momento de definir índices, consultas SQL y estrategias de optimización.
+
+\begin{longtable}{p{4.5cm} p{6.5cm} p{3cm}}
+\toprule
+\textbf{Operación esperada} & \textbf{Descripción de la consulta o actualización} & \textbf{Tiempo esperado} \\
+\midrule
+\endhead
+
+Búsqueda de materiales por datos principales & Consulta sobre la entidad \texttt{Material}, filtrando por atributos disponibles como identificador, alias, idioma, país o año de publicación. En caso de búsquedas por autor o género, se requiere unir \texttt{Material} con las relaciones \texttt{Escribe} y \texttt{Pertenece}. & Menor a 2 segundos. \\
+
+Consulta de materiales por autor & Permite listar los materiales escritos por un autor específico mediante la relación \texttt{Escribe}, uniendo \texttt{Autor}, \texttt{Escribe} y \texttt{Material}. & Menor a 2 segundos. \\
+
+Consulta de materiales por género & Permite listar materiales asociados a un género mediante la relación \texttt{Pertenece}, uniendo \texttt{Genero}, \texttt{Pertenece} y \texttt{Material}. & Menor a 2 segundos. \\
+
+Consulta de ficha completa de un material & Recupera la información principal de \texttt{Material} y sus datos relacionados: editorial, clasificación por edad, advertencias, autores, géneros, premios, ilustraciones, curiosidades y reseñas asociadas. Esta operación puede requerir varias uniones entre tablas. & Menor a 3 segundos. \\
+
+Registro de una lectura & Inserta un nuevo registro en la relación \texttt{Leer}, asociando un usuario con un material y guardando la fecha de lectura. Esta operación no actualiza un contador dentro de \texttt{Material}; la cantidad de lecturas se obtiene posteriormente mediante consultas de conteo. & Menor a 1 segundo. \\
+
+Registro de un like & Inserta un nuevo registro en la relación \texttt{Likes}, asociando un usuario con un material marcado como favorito. & Menor a 1 segundo. \\
+
+Registro de una reseña & Inserta una nueva \texttt{Reseña} asociada a un usuario y a un material, incluyendo puntaje, comentario, fecha y cantidad de likes de la reseña. & Menor a 1 segundo. \\
+
+Consulta de reseñas de un material & Recupera las reseñas asociadas a un material específico mediante la relación entre \texttt{Material} y \texttt{Reseña}. Puede ordenarse por fecha, puntaje o cantidad de likes de la reseña. & Menor a 2 segundos. \\
+
+Listado de materiales populares & Calcula popularidad a partir de las interacciones registradas en \texttt{Likes}, \texttt{Leer} y \texttt{Reseña}. Como el modelo no almacena un atributo directo de cantidad de lecturas en \texttt{Material}, estos valores se obtienen mediante agregaciones como \texttt{COUNT} y \texttt{AVG}. & Menor a 3 segundos con índices adecuados. \\
+
+Consulta de historial de lectura de un usuario & Recupera los materiales asociados a un usuario mediante la relación \texttt{Leer}, incluyendo la fecha en que fueron registrados como leídos. & Menor a 2 segundos. \\
+
+Consulta de materiales premiados & Lista materiales que ganaron premios mediante la relación \texttt{Ganar}, uniendo \texttt{Material}, \texttt{Ganar} y \texttt{Premio}. & Menor a 2 segundos. \\
+
+Consulta por clasificación de edad & Lista materiales asociados a una clasificación \texttt{AgeRate}, incluyendo advertencias de contenido cuando corresponda mediante \texttt{Warning}. & Menor a 2 segundos. \\
+
+Reportes estadísticos generales & Genera resultados agregados sobre materiales, autores, géneros, likes, lecturas y reseñas. Estas consultas pueden requerir agrupamientos, conteos y promedios sobre tablas de alto crecimiento. & Menor a 5 segundos para reportes básicos. \\
+
+\bottomrule
+\end{longtable}
+
+Para cumplir con estas velocidades en una futura implementación, será necesario crear índices sobre las claves primarias, claves foráneas y atributos de búsqueda frecuente. En particular, las relaciones \texttt{Leer}, \texttt{Likes}, \texttt{Reseña}, \texttt{Escribe}, \texttt{Pertenece} y \texttt{Ganar} serían candidatas importantes para optimización, debido a que concentran gran parte de las consultas entre usuarios, materiales e interacciones.
+
+También se debe considerar que las operaciones de listado masivo, como materiales populares, historial de usuario o reseñas de un material, deberían utilizar paginación para evitar devolver demasiados registros en una sola consulta. De esta manera, el sistema puede mantener tiempos de respuesta aceptables incluso cuando el volumen de datos aumente.
+% -------------------------------------------------
+% -------------------------------------------------
+\subsection{Objetivos del proyecto}
+
+\subsubsection{Objetivo general}
+
+Diseñar una base de datos relacional para una plataforma de catálogo, lectura, reseñas y descubrimiento de materiales literarios, que permita organizar de manera estructurada la información de materiales, usuarios, autores, géneros, subgéneros, editoriales, premios, clasificaciones por edad, ilustraciones, curiosidades e interacciones de usuario, respetando las reglas semánticas del dominio y facilitando futuras consultas, análisis y optimizaciones sobre los datos almacenados.
+
+\subsubsection{Objetivos específicos}
+
+\begin{itemize}
+    \item Identificar las entidades principales del dominio literario representadas en el sistema, tales como \texttt{Material}, \texttt{Usuario}, \texttt{Autor}, \texttt{Genero}, \texttt{SubGenero}, \texttt{Editorial}, \texttt{Premio}, \texttt{AgeRate}, \texttt{Warning}, \texttt{Ilustracion}, \texttt{Curiosidad} y \texttt{Reseña}.
+
+    \item Definir las relaciones semánticas entre las entidades del modelo, incluyendo relaciones de autoría, clasificación, publicación, pertenencia a géneros, asignación de premios, asociación de ilustraciones y curiosidades, y registro de interacciones de usuario.
+
+    \item Representar las interacciones de los usuarios con los materiales mediante relaciones y entidades específicas como \texttt{Leer}, \texttt{Likes} y \texttt{Reseña}, evitando almacenar datos derivados innecesarios como contadores directos de lecturas dentro de la entidad \texttt{Material}.
+
+    \item Diseñar el modelo Entidad-Relación del sistema, incorporando entidades fuertes, entidades débiles, relaciones binarias, especialización de materiales mediante jerarquía \textit{Is A}, atributos, llaves, cardinalidades y restricciones de participación.
+
+    \item Transformar el modelo Entidad-Relación en un modelo relacional normalizado, definiendo las tablas resultantes, sus atributos, llaves primarias, llaves foráneas y tablas intermedias necesarias para representar relaciones muchos a muchos.
+
+    \item Definir restricciones de integridad que permitan mantener la consistencia de los datos, incluyendo obligatoriedad de atributos, restricciones de edad, rangos válidos para puntajes y clasificaciones, dependencia de entidades débiles y consistencia temporal entre materiales, editoriales y reseñas.
+
+    \item Incorporar el atributo \texttt{Rol} en la entidad \texttt{Usuario} para diferenciar tipos funcionales de usuarios dentro del sistema, sin modelar herencia entre usuarios en esta primera versión del proyecto.
+
+    \item Construir un diccionario de datos inicial que describa cada tabla, atributo, tipo de dato, llave primaria, llave foránea y significado dentro del contexto de la plataforma.
+
+    \item Estimar el volumen de datos esperado en un escenario de producción realista, considerando especialmente el crecimiento de las tablas y relaciones de interacción como \texttt{Leer}, \texttt{Likes} y \texttt{Reseña}.
+
+    \item Establecer criterios iniciales de rendimiento para consultas frecuentes, tales como búsqueda de materiales, consulta de fichas completas, registro de interacciones, listado de materiales populares y generación de reportes estadísticos.
+
+    \item Servir como base para una futura implementación física en PostgreSQL, incluyendo la posterior creación de consultas SQL, índices, pruebas de rendimiento y optimización de operaciones sobre grandes volúmenes de datos.
+\end{itemize}
+
+% -------------------------------------------------
+\subsection{Referencias del proyecto}
+
+Para la definición del dominio se tomaron como referencia plataformas de catálogo y recomendación literaria, tales como sistemas de catálogo digital literario, catálogos editoriales, plataformas de reseñas de libros y aplicaciones de seguimiento de lectura.
+
+También se consideran como fuentes potenciales de datos:
+
+\begin{itemize}
+    \item Catálogos públicos de libros y autores.
+    \item Información pública de editoriales.
+    \item Listados públicos de premios literarios.
+    \item Datos sintéticos generados para usuarios, likes, lecturas y reseñas.
+\end{itemize}
+
+% -------------------------------------------------
+\subsection{Eventualidades}
+
+% -------------------------------------------------
+\subsubsection{Problemas que pudieran encontrarse en el proyecto}
+Durante el desarrollo del proyecto podrían presentarse los siguientes problemas:
+
+\begin{itemize}
+    \item Dificultad para conseguir datos reales completos y consistentes para poblar la base de datos.
+    \item Duplicidad de autores, materiales o editoriales con nombres similares que generen inconsistencias en el registro.
+    \item Ambigüedad en la clasificación de un material dentro de uno o más géneros y subgéneros.
+    \item Posibles inconsistencias en la captura de datos, como reseñas publicadas con fechas anteriores a la fecha de publicación del material al que hacen referencia.
+    \item Crecimiento elevado de las tablas de interacción, especialmente las correspondientes a likes, historial de lecturas y reseñas, lo que podría afectar el rendimiento de las consultas.
+    \item Crecimiento exponencial de las tablas intermedias de relaciones Muchos a Muchos que podría requerir optimización.
+    \item Necesidad de generar datos sintéticos coherentes para realizar pruebas con grandes volúmenes de información.
+    \item Consultas pesadas al combinar materiales, géneros, autores, likes, lecturas y reseñas de forma simultánea.
+\end{itemize}
+
+% -------------------------------------------------
+\subsubsection{Límites y alcances del proyecto}
+
+\textbf{Alcances:}
+\begin{itemize}
+    \item Modelado completo de las entidades literarias, sus datos y el sistema de usuarios.
+    \item Generación del Modelo Lógico Entidad-Relación (E-R) y del Modelo Relacional.
+    \item Gestión de materiales literarios y culturales de distintos tipos: libros, revistas, audiolibros, poemas y ensayos.
+    \item Gestión de autores, géneros, subgéneros, editoriales, premios y clasificación por edad (AgeRate).
+    \item Registro de usuarios con información personal y credenciales de acceso.
+    \item Registro del historial de lecturas, likes y reseñas asociadas a los materiales.
+    \item Generación de reportes básicos de popularidad en función de interacciones de los usuarios.
+\end{itemize}
+
+\textbf{Límites:}
+\begin{itemize}
+    \item El sistema únicamente modela la estructura de los datos; no gestiona el almacenamiento físico de archivos multimedia de los materiales.
+    \item El sistema no administrará el contenido completo de libros o materiales protegidos por derechos de autor.
+    \item No se contemplan transacciones, suscripciones ni funcionalidades de comercio electrónico.
+    \item El sistema no incluirá mecanismos de autenticación avanzada ni una interfaz web funcional dentro del alcance del Hito 1 del Proyecto.
+\end{itemize}
+
+
+% =================================================
+\section{Modelo Entidad-Relación}
+
+% -------------------------------------------------
+\subsection{Reglas semánticas}
+
+A partir del modelo Entidad-Relación propuesto, se identifican las siguientes reglas semánticas:
+
+\begin{enumerate}
+    \item Un \textbf{Material} es identificado por su \texttt{Id} (Bigint). Sus atributos obligatorios son: Número de Páginas, Año de Publicación e Idioma. Los atributos opcionales (pueden ser nulos) son: Eslogan y Alias.
+
+    \item Los materiales pueden ser de cinco tipos: \textbf{Audiolibro}, \textbf{Revista}, \textbf{Ensayo}, \textbf{Poema} y \textbf{Libro}. Cada tipo hereda los atributos generales del Material.
+
+    \item Un libro puede tener diferentes versiones, registradas como materiales distintos, dado que pueden variar en formato, número de páginas, año de publicación e idioma.
+
+    \item Una \textbf{Editorial} es identificada por su \texttt{Id}. Posee nombre, país de operación y fecha de fundación como atributos obligatorios. El atributo URL de página web es opcional (puede ser nulo).
+
+    \item Un material es publicado por \textbf{una única editorial}, pero una editorial puede publicar \textbf{varios materiales}. El Año de Publicación del material debe ser \textbf{mayor o igual} al Año de Fundación de la editorial que lo publica.
+
+    \item El idioma de los materiales publicados por una editorial es \textbf{independiente} al país donde opera dicha editorial.
+
+    \item Un \textbf{Autor} es identificado por su \texttt{Id}. Sus atributos obligatorios son: nombre, apellido, país de origen y fecha de nacimiento. La biografía es un atributo opcional.
+
+    \item La relación de escritura entre autores y materiales es \textbf{muchos a muchos}: un autor puede escribir varios materiales y un material puede tener varios autores (coautores). \textbf{Un material no puede tener cero autores.} Adicionalmente, se registra el nivel de relevancia de cada autor en la escritura del material.
+
+    \item Un \textbf{Género} se identifica por su nombre único y posee una descripción. Un \textbf{Subgénero} se identifica por su nombre único y descripción, y \textbf{no puede existir sin un género principal} al que pertenezca.
+
+    \item Existe al menos un autor que es exponente de un género (\textit{Popularizó}), y un género puede tener varios autores que lo representen.
+
+    \item Un \textbf{AgeRate} se identifica por un código numérico (\texttt{Code}, Bigint). Su atributo \texttt{Label} (código alfanumérico, ej. T14, +18) es \textbf{obligatorio y no puede ser nulo}. Adicionalmente, registra niveles del 1 al 10 para: Lenguaje, Violencia, Contenido Sexual y Tópicos Pesados.
+
+    \item Un \textbf{Warning} es un texto que acompaña y profundiza el contenido de un AgeRate. Un AgeRate puede tener \textbf{varios Warnings}. \textbf{Un Warning no puede existir sin un AgeRate.}
+
+    \item Un material puede ganar \textbf{cero o varios premios}. Un \textbf{Premio} se identifica por su nombre único y requiere una categoría. La relevancia (escala del 1 al 5) es un atributo \textbf{opcional}.
+
+    \item Una \textbf{Curiosidad} se identifica por un código numérico (\texttt{Code}, Bigint) y contiene un texto descriptivo extenso. Una curiosidad puede estar asignada a \textbf{ninguno o a un solo material}, mientras que un material puede tener \textbf{varias curiosidades}.
+
+    \item Una \textbf{Ilustración} se identifica por un código (\texttt{Code}, Bigint). Sus atributos son: nombre del artista, estilo artístico, fecha de creación y URL de la imagen. Una ilustración puede estar asignada a \textbf{varios materiales} (por ejemplo, libros que recopilan portadas).
+
+    \item Un \textbf{Usuario} se identifica compuestamente por \texttt{Username} y \texttt{Email}, ambos únicos. Sus atributos obligatorios son: password (exactamente 12 caracteres), nombre, apellido, edad, teléfono, ciudad y rol. \textbf{Ninguno puede ser nulo.} La edad mínima para registrarse es \textbf{12 años}. El atributo \texttt{Rol} permite distinguir el perfil funcional del usuario dentro del sistema sin crear entidades separadas para cada tipo de usuario.
+
+    \item El sistema registra el \textbf{historial de lectura}: un usuario puede leer varios materiales y un material puede ser leído por varios usuarios. Se registra la fecha de lectura.
+
+    \item Un usuario puede marcar como favoritos (\textit{Likes}) varios materiales, y un material puede ser favorito de varios usuarios.
+
+    \item Una \textbf{Reseña} es identificada por un código numérico (\texttt{Code}). Pertenece a un usuario y está dirigida a un material; \textbf{no puede existir sin ambos}. Sus atributos son: puntaje (escala 0--10 con un decimal), comentario, fecha de publicación y número de likes. La \textbf{fecha de publicación} de la reseña debe ser \textbf{mayor o igual} al año de publicación del material reseñado.
+\end{enumerate}
+
+
+% -------------------------------------------------
+\subsection{Modelo Entidad-Relación}
+
+En esta sección se presenta el diagrama Entidad-Relación del sistema. El modelo representa las entidades principales del dominio, sus atributos, relaciones, multiplicidades y especializaciones.
+
+\begin{figure}[H]
+    \centering
+    \IfFileExists{Bd-proyecto-1-final.drawio.png}{
+        \includegraphics[width=0.95\textwidth]{Bd-proyecto-1-final.drawio.png}
+    }{
+        \fbox{
+        \begin{minipage}{0.85\textwidth}
+        \centering
+        \vspace{1cm}
+        \textbf{Insertar aquí el diagrama Entidad-Relación.} \\
+        Subir la imagen a Overleaf con el nombre \texttt{Bd-proyecto-1-final.drawio.png}.
+        \vspace{1cm}
+        \end{minipage}
+        }
+    }
+    \caption{Modelo Entidad-Relación de la plataforma de materiales literarios.} \\         \vspace{1cm}
+
+\textbf{Nota:} Si la imagen no se visualiza en el informe, puede accederse mediante el siguiente enlace:
+\href{https://drive.google.com/file/d/1m1DqutcdsQO6cgbI_qTx6ONmGq6qyAPx/view?usp=sharing}{Modelo Entidad-Relación}.
+
+    \label{fig:er}
+\end{figure}
+
+% -------------------------------------------------
+\subsection{Especificaciones y Consideraciones sobre el Modelo}
+
+\begin{itemize}
+    \item La entidad \textbf{Material} actúa como entidad padre en una jerarquía de herencia total. Los subtipos \textbf{Audiolibro}, \textbf{Libro}, \textbf{Revista}, \textbf{Ensayo} y \textbf{Poema} heredan el \texttt{Id} de Material como clave primaria y foránea simultáneamente.
+
+    \item La entidad \textbf{SubGénero} es una entidad débil respecto a \textbf{Género}: su clave primaria es compuesta por \texttt{(Genero.Nombre, Nombre)}, lo que garantiza que no puede existir sin su género principal.
+
+    \item La entidad \textbf{Warning} es una entidad débil respecto a \textbf{AgeRate}: su existencia depende del \texttt{AgeRate.Code} al que pertenece.
+
+    \item La relación \textbf{Escribe} entre \textbf{Autor} y \textbf{Material} es de cardinalidad \textit{N:M}, con el atributo adicional \textit{Relevancia} que cuantifica la participación de cada autor en la obra.
+
+    \item La relación \textbf{Contiene} entre \textbf{Material} e \textbf{Ilustración} es de cardinalidad \textit{N:M}, con el atributo adicional \textit{NúmeroDePágina} que indica en qué página del material aparece la ilustración.
+
+    \item La relación \textbf{Leer} entre \textbf{Usuario} y \textbf{Material} es de cardinalidad \textit{N:M}, con el atributo \textit{Fecha} que registra cuándo el usuario leyó el material.
+
+    \item La relación \textbf{Ganar} entre \textbf{Material} y \textbf{Premio} es de cardinalidad \textit{N:M}, permitiendo que un material gane múltiples premios y que un premio sea otorgado a múltiples materiales.
+
+    \item El \textbf{Usuario} utiliza una clave primaria compuesta por \texttt{Username} y \texttt{Email}, ambos con restricción de unicidad. Esta clave compuesta se propaga como clave foránea en las relaciones \textbf{Reseña}, \textbf{Leer} y \textbf{Likes}. El atributo \texttt{Rol} se mantiene como atributo descriptivo de Usuario y no forma parte de la clave primaria.
+
+    \item La restricción de que el \textbf{Año de Publicación} del material sea $\geq$ al \textbf{Año de Fundación} de su editorial deberá implementarse mediante un \textit{CHECK constraint} o trigger en la base de datos física.
+
+    \item La restricción de que la \textbf{fecha de la reseña} sea $\geq$ al año de publicación del material reseñado deberá implementarse igualmente mediante un \textit{CHECK constraint} o trigger.
+
+    \item El atributo \texttt{Password} del usuario tiene longitud fija de 12 caracteres, lo que puede modelarse con \texttt{Varchar(12)} acompañado de una restricción de longitud mínima y máxima.
+
+    \item La \textbf{Curiosidad} mantiene una relación opcional con Material (puede existir sin estar asignada a ningún material), modelada con participación parcial del lado de Curiosidad.
+\end{itemize}
+% =================================================
+\section{Modelo Relacional}
+
+% -------------------------------------------------
+\subsection{Modelo Relacional}
+
+A partir del diagrama E‑R se deducen las siguientes relaciones normalizadas. Las claves primarias se presentan subrayadas de forma continua, mientras que las llaves foráneas se muestran subrayadas con línea punteada:
+
+\subsubsection*{Leyenda de Convenciones}
+En las relaciones normalizadas se emplea la siguiente notación:
+\uline{Atributo} indica una clave primaria (PK),
+\dashuline{Atributo} indica una llave foránea (FK),
+y \uline{\dashuline{Atributo}} señala un atributo que es simultáneamente PK y FK. \\
+
+\begin{itemize}
+    %-------- MATERIAL --------
+    \item
+\textbf{Material}(
+\uline{Id:Bigint},
+Numero de Páginas:Int,
+Año de Publicación:Bigint,
+Eslogan:Varchar(100),
+Alias:Varchar(50),
+País:Varchar(15),
+Idioma:Varchar(15),
+\dashuline{AgeRate.Code:Bigint},\\
+\dashuline{Editorial.Id:Bigint})
+ \vspace{0.2cm}
+\item
+\textbf{AudioBook}(
+\uline{\dashuline{Material.Id:Bigint}})
+ \vspace{0.2cm}
+
+\item
+\textbf{Ensayo}(
+\uline{\dashuline{Material.Id:Bigint}})
+ \vspace{0.2cm}
+
+\item
+\textbf{Revista}(
+\uline{\dashuline{Material.Id:Bigint}})
+ \vspace{0.2cm}
+
+\item
+\textbf{Libro}(
+\uline{\dashuline{Material.Id:Bigint}})
+ \vspace{0.2cm}
+
+\item
+\textbf{Poema}(
+\uline{\dashuline{Material.Id:Bigint}})
+ \vspace{0.2cm}
+
+\item
+\textbf{ImagenMaterial}(
+\uline{\dashuline{Material.Id:Bigint}},
+URLs:Text[\,] (arreglo de 3 URLs))
+ \vspace{0.2cm}
+
+\item
+\textbf{Usuario}(
+\uline{Username:Varchar(50)},
+\uline{Email:Varchar(100)},
+Password:Varchar(12),
+Nombre:Varchar(20),
+Apellido:Varchar(20),
+Edad:Int,
+Telefono:BigInt,
+Ciudad:Varchar(20),
+Rol:Varchar(20))
+
+\item
+\textbf{Reseña}(
+\uline{Code:Bigint},
+\dashuline{Material.Id:Bigint},
+\dashuline{usuario.Username:Varchar(50)}, \\
+\dashuline{Usuario.Email:Varchar(100)},
+Comentario:Varchar(500),
+Puntaje:Numeric(3,1),
+Fecha:Date,
+Likes:Int)
+
+
+
+\item
+\textbf{AgeRate}(
+\uline{Code:Bigint},
+Label:Varchar(5),
+Language:Int,
+Violence:Int,
+Sexuality:Int,
+Topics:Int)
+ \vspace{0.2cm}
+
+\item
+\textbf{Warning}(
+\uline{\dashuline{AgeRate.Code:Bigint}},
+\uline{Texto:Varchar(500)})
+ \vspace{0.2cm}
+
+\item
+\textbf{Premio}(
+\uline{Nombre:Varchar(50)},
+Categoría:Varchar(50),
+Relevancia:Int)
+ \vspace{0.2cm}
+
+\item
+\textbf{Editorial}(
+\uline{Id:Bigint},
+Nombre:Varchar(50),
+Pais:Varchar(30),
+Fundacion:Date,
+WebPage:Varchar(100))
+ \vspace{0.2cm}
+
+\item
+\textbf{Autor}(
+\uline{Id:Bigint},
+Nombre:Varchar(50),
+Apellido:Varchar(50),
+Pais:Varchar(30),
+Nacimiento:Date,
+Biografia:Varchar(500))
+ \vspace{0.2cm}
+
+\item
+\textbf{Ilustracion}(
+\uline{Code:Bigint},
+Artista:Varchar(50),
+TipoDeArte:Varchar(50),
+ImagenURL:Varchar(100),
+Fecha:Date)
+ \vspace{0.2cm}
+
+\item
+\textbf{Genero}(
+\uline{Nombre:Varchar(50)},
+Descripcion:Varchar(500))
+ \vspace{0.2cm}
+
+\item
+\textbf{SubGenero}(
+\uline{Nombre:Varchar(50)},
+\dashuline{Genero.Nombre:Varchar(50)},
+Descripcion:Varchar(500))
+
+\item
+\textbf{Curiosidad}(
+\uline{Code:Bigint},
+Descripcion:Varchar(500))
+\end{itemize}
+ \vspace{0.5cm}
+
+\textbf{Tablas Intermedias (Relaciones M:N e interacciones):}\\
+\begin{itemize}
+\item
+\textbf{Likes}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Usuario.Username:Varchar(50)}},
+\uline{\dashuline{Usuario.Email:Varchar(100)}})
+
+\item
+\textbf{Leer}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Usuario.Username:Varchar(50)}},
+\uline{\dashuline{Usuario.Email:Varchar(100)}},
+\uline{Fecha:Date})
+ \vspace{0.2cm}
+
+\item
+\textbf{Ganar}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Premio.Nombre:Varchar(50)}},
+Fecha:Date)
+
+\item
+\textbf{Escribe}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Autor.Id:Bigint}})
+
+\item
+\textbf{Popularizo}(
+\uline{\dashuline{Autor.Id:Bigint}},
+\uline{\dashuline{Genero.Nombre:Varchar(50)}})
+
+\item
+\textbf{Contiene}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Ilustracion.Code:Bigint}},
+NumeroDePagina:Int)
+
+\item
+\textbf{Pertenece}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Genero.Nombre:Varchar(50)}})
+
+\item
+\textbf{PerteneceSubGenero}(
+\uline{\dashuline{Material.Id:Bigint}},
+\uline{\dashuline{Genero.Nombre:Varchar(50)}},
+\uline{\dashuline{SubGenero.Nombre:Varchar(50)}})
+
+\item
+\textbf{Tiene}(
+\uline{\dashuline{Curiosidad.Code:Bigint}},
+\dashuline{Material.Id:Bigint})
+
+\end{itemize}
+
+
+% -------------------------------------------------
+\subsection{Especificaciones de transformación}
+A continuación se detallan las reglas de transformación aplicadas al modelo
+Entidad-Relación de la plataforma de materiales literarios.
+% -------------------------------------------------
+\subsubsection{Entidades}
+Cada entidad del modelo posee una \textbf{llave primaria} que identifica de manera única sus registros.
+Al transformar el modelo E-R en el modelo relacional, cada \textbf{entidad} se convierte en una \textbf{tabla} con el mismo nombre. El atributo identificador pasa a ser la \textbf{clave/llave primaria (PK)}, mientras que los demás atributos se mantienen como \textbf{columnas}.
+
+Las entidades regulares del proyecto y sus tablas resultantes son:
+
+\begin{itemize}
+
+    \item \textbf{AgeRate} — Clasifica los materiales según su contenido y edad
+    recomendada.
+
+    \item \textbf{Editorial} — Empresa que publica los materiales. Se identifica
+    por su Id.
+
+    \item \textbf{Material} — Recurso central del sistema. Se identifica por su Id.
+
+    \item \textbf{Autor} — Escritor de los materiales. Se identifica por su Id.
+
+    \item \textbf{Genero} — Clasifica la temática de los materiales. Se identifica
+    por su Nombre.
+
+
+    \item \textbf{Ilustracion} — Imagen o arte asociado a los materiales. Se
+    identifica por un código numérico.
+
+
+    \item \textbf{Premio} — Reconocimiento otorgado a un material.
+    \item \textbf{Usuario} — Persona registrada en el sistema. Se identifica por la
+    combinación de Username y Email, ambos únicos, y contiene un atributo \texttt{Rol}
+    para representar su perfil funcional.
+
+
+    \item \textbf{Curiosidad} — Anécdota o análisis importante relacionado con un
+    material. Se identifica por un código numérico propio.
+
+
+
+\end{itemize}
+% -------------------------------------------------
+\subsubsection{Entidades débiles}
+
+Una \textbf{entidad débil} es aquella que no puede ser identificada de manera única por sus propios atributos, por lo que depende de su existencia y relación con una \textbf{entidad regular} (propietaria). Al transformarla al modelo relacional, su \textbf{clave primaria (PK)} se construye combinando la \textbf{clave parcial} con la \textbf{PK de la entidad regular}, la cual también se incorpora como \textbf{llave foránea (FK)}.
+
+
+El proyecto contiene dos entidades débiles:
+
+\begin{itemize}
+
+    \item \textbf{Warning} — Texto de advertencia que profundiza en el contenido de
+    un AgeRate. No puede existir sin su AgeRate propietario.
+
+    \item \textbf{SubGenero} — Especialización de un género que profundiza en el
+    estilo narrativo. No puede existir sin su Genero propietario.
+
+\end{itemize}
+
+% -------------------------------------------------
+\subsubsection{Entidades superclase y subclases}
+El modelo contiene una jerarquía de herencia donde \textit{Material} actúa
+como superclase y \textit{Libro}, \textit{Revista}, \textit{AudioBook},
+\textit{Poema} y \textit{Ensayo} son sus subclases.
+
+\begin{itemize}
+
+    \item \textbf{Material} (superclase)
+    \item \textbf{Libro} — Subclase de Material.
+    \item \textbf{Revista} — Subclase de Material.
+    \item \textbf{AudioBook} — Subclase de Material.
+    \item \textbf{Poema} — Subclase de Material.
+    \item \textbf{Ensayo} — Subclase de Material.
+
+\end{itemize}
+
+
+% -------------------------------------------------
+\subsubsection{Relaciones binarias}
+
+Las relaciones binarias se transforman según su cardinalidad.
+
+\paragraph{Relaciones 1:N — FK absorbida en el lado N.}
+
+Cuando la cardinalidad es 1:N, la llave primaria de la entidad del lado~1
+se agrega como llave foránea en la tabla del lado~N.
+Las siguientes relaciones aplican esta regla y sus FKs ya quedaron
+incorporadas en las tablas de sus respectivas entidades:
+
+\begin{itemize}
+
+    \item \textbf{Editorial publica Material} (1:N) — Una editorial publica varios
+    materiales, pero un material es publicado por exactamente una editorial.
+    La FK \texttt{Editorial.Id} fue incorporada en la tabla \textit{Material}.
+
+    \item \textbf{AgeRate clasifica Material} (1:N) — Un AgeRate clasifica varios
+    materiales, pero un material tiene exactamente un AgeRate.
+    La FK \texttt{AgeRate.Code} fue incorporada en la tabla \textit{Material}.
+
+\end{itemize}
+
+\paragraph{Relaciones 1:N — Tabla intermedia por participación parcial.}
+
+Cuando la participación del lado~N es parcial (el atributo puede ser nulo),
+se opta por una tabla intermedia en lugar de una FK nulable, evitando
+valores nulos y preservando la integridad referencial.
+
+\begin{itemize}
+
+    \item \textbf{Tiene} — Material tiene Curiosidades (1:N con participación
+    parcial desde \textit{Curiosidad}). Una curiosidad puede estar asignada
+    a ninguno o a un único material; un material puede tener muchas curiosidades.
+    Se genera la tabla \textit{Tiene}, donde \texttt{Curiosidad.Code}
+    es PK (garantiza que cada curiosidad aparece a lo sumo una vez) y
+    \texttt{Material.Id} es FK.
+\end{itemize}
+
+\paragraph{Relaciones M:N — Nueva tabla con PK compuesta.}
+
+Las relaciones M:N se transforman en una tabla nueva. Su PK está formada
+por las PKs de ambas entidades participantes, cada una actuando también
+como FK. Si la relación posee atributos propios, estos se agregan como
+columnas adicionales.
+
+\begin{itemize}
+
+    \item \textbf{Escribe} — Autor escribe Material (M:N). Un autor escribe
+    varios materiales y un material puede ser escrito por varios autores.
+    Un material no puede tener cero autores.
+
+
+    \item \textbf{Pertenece} — Material pertenece a Género (M:N). Un material
+    puede clasificarse en varios géneros y un género puede clasificar
+    varios materiales.
+
+
+    \item \textbf{Popularizo} — Autor popularizó Género (M:N). Hay autores que
+    representan exponencialmente un género; un género puede tener varios
+    autores que lo representen.
+
+
+    \item \textbf{Contiene} — Material contiene Ilustración (M:N con atributo).
+    Un material puede tener varias ilustraciones y una ilustración puede
+    aparecer en varios materiales. El atributo \texttt{NumeroDePagina} indica
+    en qué página del material aparece la ilustración.
+
+    \item \textbf{Leer} — Usuario lee Material (M:N con atributo). Registra el
+    historial de lectura. El atributo \texttt{Fecha} almacena cuándo el usuario
+    leyó el material.
+
+    \item \textbf{Likes} — Usuario marca como favorito un Material (M:N).
+
+    \item \textbf{Ganar} — Material gana Premio (M:N con atributo). Un material
+    puede ganar varios premios; un premio puede ser otorgado a varios materiales.
+    El atributo \texttt{Fecha} registra cuándo se otorgó el premio.
+
+    \item \textbf{Reseña} — Usuario reseña un Material (M:N con múltiples atributos).
+    Dado que la relación posee su propio identificador (\texttt{Code}) y
+    múltiples atributos descriptivos, se trata como una entidad asociativa.
+    La PK es \texttt{Code}; el par \texttt{(Material.Id, Usuario.Username,
+    Usuario.Email)} actúa como FK compuesta.
+    La fecha de publicación debe ser mayor o igual al año de publicación
+    del material; el puntaje está en escala 0--10 con un decimal de precisión.
+
+\end{itemize}
+
+
+% -------------------------------------------------
+\subsection{Diccionario de datos}
+
+A continuación se presenta el diccionario de datos del sistema de catálogo
+literario. Cada tabla describe los atributos de una entidad o relación,
+indicando su tipo de dato, si es una llave primaria~(PK) y/o
+llave foránea~(FK), y una descripción del atributo en el contexto del proyecto.
+
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Code     & Bigint     & X & & Identificador numérico único de la categoría de clasificación por edad. \\ \hline
+Label    & Varchar(5) & & & Código corto que representa la categoría (ej.\ T14, +18). No puede ser nulo. \\ \hline
+Language & Int        & & & Nivel de lenguaje inapropiado, escala del 1 al 10. \\ \hline
+Violence & Int        & & & Nivel de violencia en el contenido, escala del 1 al 10. \\ \hline
+Sexuality & Int       & & & Nivel de contenido sexual presente, escala del 1 al 10. \\ \hline
+Topics   & Int        & & & Nivel de tópicos pesados o sensibles, escala del 1 al 10. \\ \hline
+\end{tabularx}
+\caption{Tabla: AgeRate}
+\end{table}
+
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+AgeRate\_Code & Bigint       & X & X & Identificador del AgeRate propietario. PK y FK hacia AgeRate. No puede existir sin él. \\ \hline
+Texto         & Varchar(500) & X & & Clave parcial. Texto descriptivo que amplía el tipo de contenido presente en el material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Warning}
+\end{table}
+
+
+% ─────────────────────────────────────────────────────────────
+% 3. EDITORIAL
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Id        & Bigint       & X & & Identificador numérico único de la editorial. \\ \hline
+Nombre    & Varchar(50)  & & & Nombre oficial de la empresa editorial. \\ \hline
+Pais      & Varchar(30)  & & & País donde opera y tiene sede la editorial. \\ \hline
+Fundacion & Date         & & & Fecha de fundación de la editorial. \\ \hline
+WebPage   & Varchar(100) & & & URL de la página web oficial. Puede ser nulo. \\ \hline
+\end{tabularx}
+\caption{Tabla: Editorial}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 4. MATERIAL
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Id                 & Bigint       & X & & Identificador numérico único del material. \\ \hline
+Numero\_Paginas    & Int          & & & Cantidad total de páginas del material. \\ \hline
+Anio\_Publicacion  & Bigint       & & & Año en el que fue publicado originalmente. \\ \hline
+Eslogan            & Varchar(100) & & & Frase representativa de la obra. Puede ser nulo. \\ \hline
+Alias              & Varchar(50)  & & & Nombre abreviado o popular de la obra. Puede ser nulo. \\ \hline
+Pais               & Varchar(15)  & & & País de origen o publicación del material. \\ \hline
+Idioma             & Varchar(15)  & & & Idioma en el que está escrito o narrado. \\ \hline
+Tipo               & Varchar(10)  & & & Discriminador de subtipo: Libro, Ensayo, Revista, Poema o AudioBook (Cambio A). \\ \hline
+AgeRate\_Code      & Bigint       & & X & FK hacia AgeRate. Clasificación de edad asignada al material. \\ \hline
+Editorial\_Id      & Bigint       & & X & FK hacia Editorial. Editorial que publica el material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Material}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 5. LIBRO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Identifica el material de tipo Libro. \\ \hline
+\end{tabularx}
+\caption{Tabla: Libro}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 6. REVISTA
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Identifica el material de tipo Revista. \\ \hline
+\end{tabularx}
+\caption{Tabla: Revista}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 7. AUDIOBOOK
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Identifica el material de tipo AudioBook. \\ \hline
+\end{tabularx}
+\caption{Tabla: AudioBook}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 8. POEMA
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Identifica el material de tipo Poema. \\ \hline
+\end{tabularx}
+\caption{Tabla: Poema}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 9. ENSAYO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Identifica el material de tipo Ensayo. \\ \hline
+\end{tabularx}
+\caption{Tabla: Ensayo}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 9b. IMAGENMATERIAL  (Cambio M)
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint  & X & X & PK y FK hacia Material. Una fila de portadas por material. \\ \hline
+URLs         & Text[\,] & & & Arreglo de exactamente 3 URLs de imagen de portada (Cambio M). \\ \hline
+\end{tabularx}
+\caption{Tabla: ImagenMaterial}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 10. AUTOR
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Id         & Bigint       & X & & Identificador numérico único del autor. \\ \hline
+Nombre     & Varchar(50)  & & & Nombre de pila del autor. \\ \hline
+Apellido   & Varchar(50)  & & & Apellido del autor. \\ \hline
+Pais       & Varchar(30)  & & & País de origen o nacionalidad del autor. \\ \hline
+Nacimiento & Date         & & & Fecha de nacimiento del autor. \\ \hline
+Biografia  & Varchar(500) & & & Resumen de la vida y trayectoria del autor. Puede ser nulo. \\ \hline
+\end{tabularx}
+\caption{Tabla: Autor}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 11. GENERO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Nombre      & Varchar(50)  & X & & Nombre único del género literario. \\ \hline
+Descripcion & Varchar(500) & & & Descripción de las temáticas y sensaciones propias del género. \\ \hline
+\end{tabularx}
+\caption{Tabla: Genero}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 12. SUBGENERO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Genero\_Nombre & Varchar(50)  & X & X & PK y FK hacia Genero. No puede existir sin su género propietario. \\ \hline
+Nombre         & Varchar(50)  & X & & Clave parcial. Nombre del subgénero, único dentro de su género. \\ \hline
+Descripcion    & Varchar(500) & & & Descripción de los elementos narrativos y estilo del subgénero. \\ \hline
+\end{tabularx}
+\caption{Tabla: SubGenero}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 13. ILUSTRACION
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Code       & Bigint       & X & & Identificador numérico único de la ilustración. \\ \hline
+Artista    & Varchar(50)  & & & Nombre del artista que realizó la ilustración. \\ \hline
+TipoDeArte & Varchar(50)  & & & Estilo artístico empleado (ej.\ acuarela, digital, óleo). \\ \hline
+ImagenURL  & Varchar(100) & & & URL donde se aloja la imagen. \\ \hline
+Fecha      & Date         & & & Fecha de creación de la ilustración. \\ \hline
+\end{tabularx}
+\caption{Tabla: Ilustracion}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 14. CURIOSIDAD
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Code        & Bigint       & X & & Identificador numérico único de la curiosidad. \\ \hline
+Descripcion & Varchar(500) & & & Texto que describe la anécdota o análisis importante del material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Curiosidad}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 15. PREMIO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Nombre     & Varchar(50) & X & & Nombre único del premio literario. \\ \hline
+Categoria  & Varchar(50) & & & Área en la que se otorgó el premio (ej.\ Ficción, Poesía). \\ \hline
+Relevancia & Int         & & & Jerarquía del premio en el mundo literario, escala 1--5. Puede ser nulo. \\ \hline
+\end{tabularx}
+\caption{Tabla: Premio}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 16. USUARIO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Username & Varchar(50)  & X & & Nombre de usuario único en la plataforma. Parte de la PK compuesta. \\ \hline
+Email    & Varchar(100) & X & & Correo electrónico único del usuario. Parte de la PK compuesta. \\ \hline
+Password & Varchar(12)  & & & Contraseña de acceso. Exactamente 12 caracteres. \\ \hline
+Nombre   & Varchar(20)  & & & Nombre real del usuario. \\ \hline
+Apellido & Varchar(20)  & & & Apellido real del usuario. \\ \hline
+Edad     & Int          & & & Edad del usuario en años. Mínimo 12 años. \\ \hline
+Telefono & Bigint       & & & Número telefónico de contacto del usuario. \\ \hline
+Ciudad   & Varchar(20)  & & & Ciudad de residencia del usuario. \\ \hline
+Rol      & Varchar(20)  & & & Rol funcional del usuario dentro del sistema. Permite diferenciar perfiles como Administrador o Registrado sin crear una jerarquía de entidades. \\ \hline
+\end{tabularx}
+\caption{Tabla: Usuario}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 17. RESEÑA
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Code             & Bigint        & X & & Identificador numérico único de la reseña. \\ \hline
+Material\_Id     & Bigint        & & X & FK hacia Material. Material al que está dirigida la reseña. \\ \hline
+Usuario\_Username & Varchar(50)  & & X & FK hacia Usuario. Username del usuario que publica la reseña. \\ \hline
+Usuario\_Email   & Varchar(100)  & & X & FK hacia Usuario. Email del usuario que publica la reseña. \\ \hline
+Comentario       & Varchar(500)  & & & Texto de opinión o análisis del material. \\ \hline
+Puntaje          & Numeric(3,1)  & & & Puntuación del 0 al 10, con un decimal de precisión (Cambio G). \\ \hline
+Fecha            & Date          & & & Fecha de publicación, debe ser $\geq$ año de publicación del material. \\ \hline
+Likes            & Int           & & & Cantidad de votos positivos recibidos por la reseña ($\geq 0$, Cambio F). \\ \hline
+\end{tabularx}
+\caption{Tabla: Reseña}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 18. ESCRIBE
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id & Bigint & X & X & PK y FK hacia Material. Material que fue escrito. Un material debe tener al menos un autor. \\ \hline
+Autor\_Id    & Bigint & X & X & PK y FK hacia Autor. Autor o coautor que escribió el material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Escribe}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 19. LEER
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id      & Bigint       & X & X & PK y FK hacia Material. Material leído por el usuario. \\ \hline
+Usuario\_Username & Varchar(50)  & X & X & PK y FK hacia Usuario. Username del usuario que leyó el material. \\ \hline
+Usuario\_Email    & Varchar(100) & X & X & PK y FK hacia Usuario. Email del usuario que leyó el material. \\ \hline
+Fecha             & Date         & X & & Parte de la PK: permite registrar relecturas en distintas fechas (Cambio D). \\ \hline
+\end{tabularx}
+\caption{Tabla: Leer}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 20. LIKES
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id      & Bigint       & X & X & PK y FK hacia Material. Material marcado como favorito. \\ \hline
+Usuario\_Username & Varchar(50)  & X & X & PK y FK hacia Usuario. Username del usuario que marcó el material. \\ \hline
+Usuario\_Email    & Varchar(100) & X & X & PK y FK hacia Usuario. Email del usuario que marcó el material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Likes}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 21. GANAR
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id   & Bigint      & X & X & PK y FK hacia Material. Material que ganó el premio. \\ \hline
+Premio\_Nombre & Varchar(50) & X & X & PK y FK hacia Premio. Premio otorgado al material. \\ \hline
+Fecha          & Date        & & & Fecha en la que fue otorgado el premio. \\ \hline
+\end{tabularx}
+\caption{Tabla: Ganar}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 22. PERTENECE
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id  & Bigint      & X & X & PK y FK hacia Material. Material clasificado bajo el género. \\ \hline
+Genero\_Nombre & Varchar(50) & X & X & PK y FK hacia Genero. Género literario al que pertenece el material. \\ \hline
+\end{tabularx}
+\caption{Tabla: Pertenece}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 22b. PERTENECESUBGENERO  (Cambio I)
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id      & Bigint      & X & X & PK y FK hacia Material. Material clasificado bajo el subgénero. \\ \hline
+Genero\_Nombre    & Varchar(50) & X & X & PK y FK hacia SubGenero. Género del subgénero. \\ \hline
+SubGenero\_Nombre & Varchar(50) & X & X & PK y FK hacia SubGenero. Subgénero al que pertenece el material (Cambio I). \\ \hline
+\end{tabularx}
+\caption{Tabla: PerteneceSubGenero}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 23. POPULARIZO
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Autor\_Id      & Bigint      & X & X & PK y FK hacia Autor. Autor exponente o representante del género. \\ \hline
+Genero\_Nombre & Varchar(50) & X & X & PK y FK hacia Genero. Género que el autor representó o popularizó. \\ \hline
+\end{tabularx}
+\caption{Tabla: Popularizo}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 24. CONTIENE
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Material\_Id      & Bigint & X & X & PK y FK hacia Material. Material que contiene la ilustración. \\ \hline
+Ilustracion\_Code & Bigint & X & X & PK y FK hacia Ilustracion. Ilustración que aparece en el material. \\ \hline
+NumeroDePagina    & Int    & & & Número de página del material en la que aparece la ilustración. \\ \hline
+\end{tabularx}
+\caption{Tabla: Contiene}
+\end{table}
+
+% ─────────────────────────────────────────────────────────────
+% 25. TIENE
+% ─────────────────────────────────────────────────────────────
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{|l|l|c|c|X|}
+\hline
+\textbf{Atributo} & \textbf{Tipo de dato} & \textbf{PK} & \textbf{FK} & \textbf{Descripción} \\ \hline
+Curiosidad\_Code & Bigint & X & X & PK y FK hacia Curiosidad. Una curiosidad se asigna a lo sumo a un material. \\ \hline
+Material\_Id     & Bigint & & X & FK hacia Material. Material al que está asociada la curiosidad. Puede ser nulo. \\ \hline
+\end{tabularx}
+\caption{Tabla: Tiene}
+\end{table}
+
+
+
+% -------------------------------------------------
+\subsection{Restricciones de integridad}
+
+Las principales restricciones consideradas son las siguientes:
+
+\begin{itemize}
+    \item El atributo \texttt{AgeRate.Label} no puede ser nulo.
+    \item El \texttt{Password} de un usuario tiene exactamente 12 caracteres y no puede ser nulo, garantizando que todo usuario registrado cuente con credencial de acceso.
+    \item La edad mínima para registrarse en la plataforma es de 12 años.
+    \item El \texttt{Puntaje} de una reseña debe estar en el rango $[0, 10]$ y se registra como \texttt{Numeric(3,1)} con un decimal de precisión (Cambio G).
+    \item La \texttt{Relevancia} de un Premio debe estar en el rango $[1, 5]$ o ser nula.
+    \item Los indicadores \texttt{Language}, \texttt{Violence}, \texttt{Sexuality} y \texttt{Topics} de \texttt{AgeRate} deben estar en el rango $[1, 10]$.
+    \item Los atributos \texttt{Eslogan} y \texttt{Alias} de \texttt{Material} pueden ser nulos; el resto de sus atributos no pueden serlo.
+    \item El atributo \texttt{WebPage} de \texttt{Editorial} puede ser nulo; el resto de sus atributos no pueden serlo.
+    \item La \texttt{Biografia} de un \texttt{Autor} puede ser nula; el resto de sus atributos no pueden serlo.
+    \item Ningún atributo de \texttt{Usuario}, incluido \texttt{Rol}, puede ser nulo.
+    \item El \texttt{Username} y el \texttt{Email} constituyen el identificador personal del usuario; ambos deben ser únicos e irrepetibles en toda la plataforma.
+    \item El \texttt{Nombre} de un \texttt{Genero} y el de un \texttt{Premio} deben ser únicos.
+    \item El \texttt{Nombre} de un \texttt{SubGenero} debe ser único dentro de su género propietario; puede repetirse entre géneros distintos.
+    \item Un \texttt{Warning} no puede existir sin un \texttt{AgeRate} propietario (entidad débil). Si se elimina un \texttt{AgeRate}, deben eliminarse en cascada sus \texttt{Warnings} asociados.
+    \item Un \texttt{SubGenero} no puede existir sin su \texttt{Genero} propietario (entidad débil). Si se elimina un \texttt{Genero}, deben eliminarse en cascada sus \texttt{SubGeneros}.
+    \item Una \texttt{Reseña} no puede existir sin el \texttt{Usuario} que la creó ni sin el \texttt{Material} al que está dirigida. Un usuario no puede reseñar el mismo material más de una vez (Cambio E).
+    \item Un \texttt{Material} debe estar publicado por exactamente una \texttt{Editorial} y clasificado por exactamente un \texttt{AgeRate} (participación total en ambos casos); sus respectivas llaves foráneas no pueden ser nulas.
+    \item Todo registro en \texttt{Libro}, \texttt{Revista}, \texttt{AudioBook}, \texttt{Poema} o \texttt{Ensayo} debe referenciar un \texttt{Material} existente (integridad de jerarquía).
+    \item Un \texttt{Material} no puede tener cero autores; debe existir al menos un registro en la tabla \texttt{Escribe} por cada material.
+    \item Una \texttt{Curiosidad} puede estar asignada a lo sumo a un \texttt{Material} (cardinalidad máxima 1 desde \texttt{Curiosidad}).
+    \item Un género debe ser representado por al menos un autor (participación total desde \texttt{Genero} en \texttt{Popularizo}).
+    \item El \texttt{AniodePublicacion} de un \texttt{Material} debe ser mayor o igual al año de la fecha de \texttt{Fundacion} de la \texttt{Editorial} que lo publica.
+    \item La \texttt{Fecha} de una \texttt{Reseña} debe ser mayor o igual al \texttt{AniodePublicacion} del \texttt{Material} al que está dirigida.
+    \item El idioma de los materiales publicados por una editorial es independiente del país donde opera dicha editorial; no existe restricción de coincidencia entre ambos campos.
+\end{itemize}
+
+
+% =================================================
 \section{Implementación de la base de datos}
 
 \subsection{Creación de tablas en PostgreSQL}
 
 El esquema se implementó en PostgreSQL a partir del modelo relacional del
-Hito 1. El script \texttt{sql/01\_tables.sql} crea las 25 tablas en el orden
+Hito 1. El script \texttt{sql/01\_tables.sql} crea las 27 tablas en el orden
 correcto de dependencias. Para la traducción de tipos se siguió el diccionario
 de datos del Hito 1:
 
 \begin{center}
 \begin{tabular}{ll}
 \toprule
-\textbf{Tipo en el modelo relacional} & \textbf{Tipo en PostgreSQL} \\
+\textbf{Tipo (Hito 1)} & \textbf{Tipo PostgreSQL} \\
 \midrule
 Bigint           & \texttt{BIGINT} \\
 Int              & \texttt{INTEGER} \\
 Varchar(n)       & \texttt{VARCHAR(n)} \\
 Date             & \texttt{DATE} \\
-Double Precision & \texttt{NUMERIC(3,1)} (ver Sección~\ref{sec:cambios}, cambio G) \\
+Double Precision & \texttt{NUMERIC(3,1)} (ver \ref{sec:cambios}, Cambio G) \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-Las restricciones de integridad del Hito 1 se implementaron de tres formas
-según su naturaleza:
+Las restricciones de integridad declaradas en el Hito 1 se implementaron de tres
+maneras complementarias, según su naturaleza:
 
 \begin{itemize}
-  \item \textbf{Restricciones de columna o tabla} (\texttt{NOT NULL},
+  \item \textbf{Restricciones de columna y tabla} (\texttt{NOT NULL},
   \texttt{UNIQUE}, \texttt{PRIMARY KEY}, \texttt{FOREIGN KEY}, \texttt{CHECK}):
-  para reglas que dependen solo de una fila o de una tabla. Por ejemplo,
-  \texttt{CHECK (CHAR\_LENGTH(Password) = 12)} y \texttt{CHECK (Edad >= 12)}
-  en \texttt{Usuario}; \texttt{CHECK (Relevancia BETWEEN 1 AND 5)} en
-  \texttt{Premio}; \texttt{CHECK (... BETWEEN 1 AND 10)} para los cuatro
-  indicadores de contenido en \texttt{AgeRate}.
+  Expresan reglas locales a una fila o a una tabla. Por ejemplo, en
+  \texttt{AgeRate} los cuatro indicadores de contenido se acotan con
+  \texttt{CHECK (... BETWEEN 1 AND 10)}; en \texttt{Usuario} se exige
+  \texttt{CHECK (CHAR\_LENGTH(Password) = 12)} y \texttt{CHECK (Edad >= 12)}.
 
-  \item \textbf{Columna discriminadora}: la herencia total y disjunta de
-  \texttt{Material} se garantiza con la columna \texttt{Tipo VARCHAR(10) NOT
-  NULL} y un \texttt{CHECK} que solo acepta los cinco valores válidos
-  (ver cambio A).
+  \item \textbf{Discriminador de jerarquía}: La herencia total y disjunta de
+  \texttt{Material} se garantiza con la columna \texttt{Tipo} y un
+  \texttt{CHECK} sobre los cinco subtipos válidos (Cambio A).
 
-  \item \textbf{Triggers}: para reglas que dependen de dos tablas a la vez
-  y no se pueden expresar con un \texttt{CHECK} simple
-  (ver Sección~\ref{sec:triggers}).
+  \item \textbf{Triggers}: Las reglas que cruzan varias tablas y no son
+  expresables con un \texttt{CHECK} se implementan como funciones y triggers
+  (Sección~\ref{sec:triggers}).
 \end{itemize}
 
-Las definiciones de \texttt{Material} y \texttt{Usuario}, que concentran la
-mayoría de las restricciones, son las siguientes:
+A modo de ejemplo, la definición de la tabla central \texttt{Material} y de la
+tabla maestra \texttt{Usuario} es la siguiente:
 
 \begin{lstlisting}
 CREATE TABLE Material (
@@ -155,26 +1531,27 @@ CREATE TABLE Material (
     Alias            VARCHAR(50),
     Pais             VARCHAR(15)  NOT NULL,
     Idioma           VARCHAR(15)  NOT NULL,
-    Tipo             VARCHAR(10)  NOT NULL,   -- discriminador de subtipo [cambio A]
+    Tipo             VARCHAR(10)  NOT NULL,      -- discriminador de subtipo [cambio A]
     AgeRate_Code     BIGINT       NOT NULL,
     Editorial_Id     BIGINT       NOT NULL,
-    CONSTRAINT pk_material      PRIMARY KEY (Id),
-    CONSTRAINT ck_material_tipo CHECK (Tipo IN ('Libro','Ensayo','Revista','Poema','AudioBook')),
+    CONSTRAINT pk_material PRIMARY KEY (Id),
+    CONSTRAINT ck_material_tipo CHECK
+        (Tipo IN ('Libro','Ensayo','Revista','Poema','AudioBook')),
     CONSTRAINT fk_material_agerate   FOREIGN KEY (AgeRate_Code)  REFERENCES AgeRate (Code),
-    CONSTRAINT fk_material_editorial FOREIGN KEY (Editorial_Id)  REFERENCES Editorial (Id)
+    CONSTRAINT fk_material_editorial FOREIGN KEY (Editorial_Id) REFERENCES Editorial (Id)
 );
 
 CREATE TABLE Usuario (
-    Username  VARCHAR(50)   NOT NULL,
-    Email     VARCHAR(100)  NOT NULL,
-    Password  VARCHAR(12)   NOT NULL,
-    Nombre    VARCHAR(20)   NOT NULL,
-    Apellido  VARCHAR(20)   NOT NULL,
-    Edad      INTEGER       NOT NULL,
-    Telefono  BIGINT        NOT NULL,
-    Ciudad    VARCHAR(20)   NOT NULL,
-    Rol       VARCHAR(20)   NOT NULL,
-    CONSTRAINT pk_usuario          PRIMARY KEY (Username, Email),
+    Username  VARCHAR(50)  NOT NULL,
+    Email     VARCHAR(100) NOT NULL,
+    Password  VARCHAR(12)  NOT NULL,
+    Nombre    VARCHAR(20)  NOT NULL,
+    Apellido  VARCHAR(20)  NOT NULL,
+    Edad      INTEGER      NOT NULL,
+    Telefono  BIGINT       NOT NULL,
+    Ciudad    VARCHAR(20)  NOT NULL,
+    Rol       VARCHAR(20)  NOT NULL,
+    CONSTRAINT pk_usuario PRIMARY KEY (Username, Email),
     CONSTRAINT uq_usuario_username UNIQUE (Username),
     CONSTRAINT uq_usuario_email    UNIQUE (Email),
     CONSTRAINT ck_usuario_password CHECK (CHAR_LENGTH(Password) = 12),
@@ -186,7 +1563,8 @@ El esquema completo incluye las tablas maestras (\texttt{AgeRate},
 \texttt{Editorial}, \texttt{Genero}, \texttt{Autor}, \texttt{Premio},
 \texttt{Ilustracion}, \texttt{Curiosidad}, \texttt{Material},
 \texttt{Usuario}), las entidades débiles (\texttt{Warning},
-\texttt{SubGenero}), los cinco subtipos de Material y las tablas de relación
+\texttt{SubGenero}), los cinco subtipos de Material, la tabla de portadas
+\texttt{ImagenMaterial} (Cambio M) y las tablas de relación
 (\texttt{Escribe}, \texttt{Pertenece}, \texttt{PerteneceSubGenero},
 \texttt{Popularizo}, \texttt{Contiene}, \texttt{Tiene}, \texttt{Ganar},
 \texttt{Leer}, \texttt{Likes}, \texttt{Resena}).
@@ -194,21 +1572,21 @@ El esquema completo incluye las tablas maestras (\texttt{AgeRate},
 \subsubsection{Triggers}
 \label{sec:triggers}
 
-El script \texttt{sql/02\_triggers.sql} implementa cuatro reglas del Hito 1
-que dependen de más de una tabla:
+El script \texttt{sql/02\_triggers.sql} implementa cuatro reglas del Hito 1 que
+dependen de más de una tabla:
 
 \begin{enumerate}[label=(\alph*)]
-  \item \textbf{Año de publicación vs.\ fundación editorial.}
+  \item \textbf{Año de publicación vs.\ fundación editorial:}
   \texttt{Anio\_Publicacion} de un material debe ser mayor o igual al año de
   \texttt{Fundacion} de su editorial. Se valida con un trigger
   \texttt{BEFORE INSERT OR UPDATE} sobre \texttt{Material}.
 
-  \item \textbf{Fecha de reseña vs.\ publicación.}
+  \item \textbf{Fecha de reseña vs.\ publicación:}
   El año de la fecha de una reseña debe ser mayor o igual al
   \texttt{Anio\_Publicacion} del material reseñado. También
   \texttt{BEFORE INSERT OR UPDATE}, esta vez sobre \texttt{Resena}.
 
-  \item \textbf{Todo material tiene al menos un autor.}
+  \item \textbf{Todo material tiene al menos un autor:}
   Participación total del lado \texttt{Material} en \texttt{Escribe}.
   Se implementa como \texttt{CONSTRAINT TRIGGER ... DEFERRABLE INITIALLY
   DEFERRED}: la validación ocurre al \texttt{COMMIT}, no fila por fila.
@@ -216,14 +1594,16 @@ que dependen de más de una tabla:
   \texttt{Escribe} no se pueden hacer en el mismo instante; el trigger
   diferido da margen hasta que se cierre la transacción.
 
-  \item \textbf{Todo género tiene al menos un autor representante.}
+  \item \textbf{Todo género tiene al menos un autor representante:}
   Participación total en \texttt{Popularizo}. Mismo mecanismo diferido
   que el punto anterior.
 \end{enumerate}
 
+
 \subsubsection{Vistas de usuario}
 
-El script \texttt{sql/03\_views.sql} define cinco vistas:
+El script \texttt{sql/03\_views.sql} define seis vistas:
+
 
 \begin{itemize}
   \item \textbf{vista\_material\_basico}: datos básicos de cada material
@@ -232,11 +1612,13 @@ El script \texttt{sql/03\_views.sql} define cinco vistas:
   (relación \texttt{Escribe}).
   \item \textbf{vista\_material\_subgenero}: materiales con género y
   subgénero; requiere la tabla \texttt{PerteneceSubGenero} añadida en
-  el Hito 2 (cambio I).
+  el Hito 2 (Cambio I).
   \item \textbf{vista\_popularidad\_material}: cantidad de likes, lecturas
   y reseñas por material, junto con el promedio de puntaje.
   \item \textbf{vista\_historial\_usuario}: historial de lectura por usuario
   con las fechas.
+  \item \textbf{vista\_material\_portadas}: cada material con su arreglo de
+  tres URLs de portada (tabla \texttt{ImagenMaterial}, Cambio M).
 \end{itemize}
 
 \subsection{Carga de datos}
@@ -250,26 +1632,27 @@ llaves foráneas, y envuelve la carga de \texttt{Material}+\texttt{Escribe} y
 \texttt{Genero}+\texttt{Popularizo} en transacciones para que los triggers
 diferidos puedan validar al \texttt{COMMIT}. Usa \texttt{COPY} en lugar de
 \texttt{INSERT} fila por fila para que la carga sea eficiente, y una semilla
-fija (\texttt{SEED=42}) para que los datos sean reproducibles.
+fija (\texttt{SEED=42}) para que los datos sean reproducibles. Las portadas de
+cada material (tabla \texttt{ImagenMaterial}) se generan en el servidor con
+\texttt{INSERT ... SELECT} a partir del \texttt{Id} del material, usando URLs
+deterministas de Lorem Picsum cuya disponibilidad se valida con HTTP~200 y
+reintentos antes de poblar (Cambio M).
 
-\subsection{Los cuatro escenarios de volumen}
+
+\subsection{Simulación de datos en los cuatro escenarios}
 
 Para el experimento se trabajó con cuatro bases de datos, una por escenario:
+
 
 \begin{center}
 \begin{tabular}{lrrrrr}
 \toprule
-\textbf{Base} & \textbf{Usuarios} & \textbf{Materiales}
-  & \textbf{Likes} & \textbf{Lecturas} & \textbf{Reseñas} \\
+\textbf{Base} & \textbf{Usuarios} & \textbf{Materiales} & \textbf{Likes} & \textbf{Lecturas} & \textbf{Reseñas} \\
 \midrule
-\texttt{bd\_literaria\_1k}   &     200 &     300
-  &     1\,000 &     1\,000 &     1\,000 \\
-\texttt{bd\_literaria\_10k}  &   1\,000 &   2\,000
-  &    10\,000 &    10\,000 &    10\,000 \\
-\texttt{bd\_literaria\_100k} &  10\,000 &  20\,000
-  &   100\,000 &   100\,000 &   100\,000 \\
-\texttt{bd\_literaria\_1m}   & 100\,000 & 100\,000
-  & 1\,000\,000 & 1\,000\,000 & 1\,000\,000 \\
+\texttt{bd\_literaria\_1k}   &     200 &     300 &     1\,000 &     1\,000 &     1\,000 \\
+\texttt{bd\_literaria\_10k}  &   1\,000 &   2\,000 &    10\,000 &    10\,000 &    10\,000 \\
+\texttt{bd\_literaria\_100k} &  10\,000 &  20\,000 &   100\,000 &   100\,000 &   100\,000 \\
+\texttt{bd\_literaria\_1m}   & 100\,000 & 100\,000 & 1\,000\,000 & 1\,000\,000 & 1\,000\,000 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -278,19 +1661,21 @@ La base de 1M tiene en total aproximadamente 3.86 millones de filas sumando
 todas las tablas. Los cuatro escenarios se entregan como dumps restaurables en
 \texttt{dumps/} y pueden regenerarse con el faker usando la misma semilla.
 
-\subsection{Ajustes al modelo del Hito 1}
+
+\subsection{Cambios respecto al Hito 1}
 \label{sec:cambios}
 
 Al escribir el código se identificaron doce puntos donde el modelo relacional
-dejaba reglas del dominio sin mecanismo de cumplimiento, o donde había
-decisiones de diseño que convenía precisar antes de poblar las bases. Todos
-los cambios están marcados como comentarios \texttt{[Cambio X]} en los scripts
-y explicados con detalle en \texttt{docs/cambios\_respecto\_hito1.md}.
+dejaba reglas del dominio sin mecanismo de cumplimiento, donde había decisiones
+de diseño que convenía precisar antes de poblar las bases, o donde la aplicación
+de demostración requería información adicional (las portadas). Todos los cambios
+están marcados como comentarios \texttt{[Cambio X]} en los scripts y explicados
+con detalle en \texttt{docs/cambios\_respecto\_hito1.md}.
 
 \begin{center}
 \begin{longtable}{clp{8.5cm}}
 \toprule
-\textbf{ID} & \textbf{Tipo} & \textbf{Descripción} \\
+\textbf{ID} & \textbf{Categoría} & \textbf{Cambio} \\
 \midrule
 \endhead
 A & Integridad & Columna \texttt{Tipo} en \texttt{Material} para garantizar
@@ -315,127 +1700,111 @@ H & Integridad ref. & \texttt{ON UPDATE CASCADE} en las FK que apuntan a
 I & Modelo & Nueva tabla \texttt{PerteneceSubGenero}: el Hito 1 pedía poder
     buscar materiales por subgénero, pero el modelo relacional dejaba a
     \texttt{SubGenero} sin conexión con \texttt{Material}. \\
-J & Experimento & La consulta de materiales populares agrega cada tabla de
-    interacción en subconsultas independientes para no multiplicar filas
-    (evita el producto cartesiano de unir tres relaciones 1-a-muchos). \\
-K & Experimento & Los índices del experimento se ubican sobre columnas que no
-    lideran ninguna PK: son las que producen un contraste real entre el
-    escenario con y sin índices. \\
-M & Modelo & Nueva tabla \texttt{ImagenMaterial}: cada material recibe un
-    arreglo de tres URLs de portada (Lorem Picsum) para la aplicación de
-    demostración. Los datos de imagen viven en la base, no en el front-end. \\
+J & Experimento & La consulta de materiales populares agrega cada métrica en
+    subconsultas independientes para no multiplicar las filas entre las tres
+    tablas de interacción. \\
+K & Experimento & Los índices se ubican sobre las columnas de filtro y join de
+    las cuatro consultas; el contraste con/sin índice se observa donde la
+    columna no lidera ninguna PK. \\
+M & Modelo & Nueva tabla \texttt{ImagenMaterial} (una fila por material con un
+    arreglo de 3 URLs de portada): la aplicación de demostración necesita
+    imágenes y los datos viven en la base, no en el front-end. \\
 \bottomrule
 \end{longtable}
 \end{center}
 
-Vale la pena detenerse en los cambios J y K porque afectan directamente los
-resultados del experimento. El cambio J describe la forma de la consulta de
-popularidad: en lugar de unir las tres tablas de interacción con
-\texttt{LEFT JOIN} directos sobre \texttt{Material} ---lo que generaría un
-producto cartesiano (filas de likes por filas de lecturas por filas de reseñas
-por cada material)---, la consulta agrega cada tabla por separado en
-subconsultas independientes y luego las combina, de modo que el tiempo que se
-mide refleja el costo real de una agregación total y no un error de
-formulación. El cambio K explica dónde se colocan los índices del experimento:
-sobre columnas que no son la primera de ninguna PK. Una columna que lidera una
-PK ---como \texttt{Material\_Id} en \texttt{Escribe}--- ya tiene un índice de PK
-encima, así que un índice secundario adicional no cambiaría nada; los índices
-del benchmark se ubican justo en las columnas donde sí aparece contraste entre
-el escenario con y sin índices.
 
-% ==================================================================
+Los cambios J, K y M influyen directamente en la implementación del Hito 2.
+El cambio J define la consulta de popularidad: cada tabla de interacción
+(likes, lecturas, reseñas) se agrega en una subconsulta independiente y luego
+se combinan, de modo que el tiempo medido refleja el costo real de una
+agregación total y no el de un producto cartesiano entre las tres tablas.
+El cambio K ubica los índices sobre las columnas de filtro y join de las cuatro
+consultas; el contraste con/sin índice más nítido aparece donde esa columna no
+es la primera de ninguna PK (por ejemplo \texttt{Resena.Material\_Id}, cuya PK
+es \texttt{Code}). El cambio M incorpora las portadas: cada material tiene tres
+URLs de imagen almacenadas en la base (tabla \texttt{ImagenMaterial}), de modo
+que la aplicación de demostración obtiene las imágenes desde la base de datos y
+no inyectadas desde el front-end.
+
+
+% =================================================
 \section{Optimización y Experimentación}
 
-\subsection{Consultas del experimento}
+\subsection{Consultas SQL para el experimento}
 
-\subsubsection{Criterios de selección}
+\subsubsection{Descripción del tipo de consultas seleccionadas}
 
 Se eligieron cuatro consultas que cubren patrones de acceso distintos. El
 criterio principal fue que el conjunto en su totalidad mostrara los tres
 comportamientos posibles de un índice secundario: cuándo ayuda mucho,
 cuándo ayuda poco y cuándo no ayuda. Dos de las consultas filtran por rango
-(\texttt{BETWEEN}) ---Q1 sobre el código de clasificación de edad y Q4 sobre
-el año de publicación---, que es el caso más ilustrativo del funcionamiento de
+(\texttt{BETWEEN}), que es el caso más ilustrativo del funcionamiento de
 un índice B-tree.
 
 \begin{center}
-\begin{longtable}{p{0.9cm}p{4.6cm}p{4.2cm}p{3.0cm}}
+\begin{longtable}{p{1.1cm}p{4.3cm}p{4.0cm}p{3.4cm}}
 \toprule
-\textbf{ID} & \textbf{Qué devuelve} & \textbf{Tipo de acceso}
-  & \textbf{Índice relevante} \\
+\textbf{ID} & \textbf{Qué responde} & \textbf{Patrón de acceso} & \textbf{Índice relevante} \\
 \midrule
 \endhead
-Q1 & Materiales de un género acotados por clasificación de edad
-  & Igualdad (género) + rango (\texttt{code BETWEEN})
-  & \texttt{idx\_pertenece\_genero}, \texttt{idx\_material\_agerate} \\
-Q2 & Los 20 materiales más populares (ranking)
-  & Agregación total (subconsultas independientes)
-  & \texttt{idx\_resena\_material} \\
-Q3 & Historial de lectura de un usuario
-  & Igualdad selectiva + filtro temporal + orden
-  & \texttt{idx\_leer\_usuario} \\
-Q4 & Usuarios con reseñas destacadas por rango de años
-  & \textbf{Rango} (\texttt{año BETWEEN}) + puntaje alto + \texttt{DISTINCT}
-  & \texttt{idx\_material\_anio} \\
+Q1 & Materiales de un género acotados por clasificación de edad & Igualdad (género) + \textbf{rango} (\texttt{code BETWEEN}) + joins & \texttt{idx\_pertenece\_genero}, \texttt{idx\_material\_agerate} \\
+Q2 & Los 20 materiales más populares & Agregación total sobre tres tablas grandes & \texttt{idx\_resena\_material} (el resto ayuda poco) \\
+Q3 & Historial de lectura de un usuario & Igualdad selectiva + filtro temporal + orden por fecha & \texttt{idx\_leer\_usuario} \\
+Q4 & Usuarios con reseñas destacadas en un \textbf{rango} de años & \textbf{Rango} (\texttt{anio BETWEEN}) + puntaje alto + \texttt{DISTINCT} & \texttt{idx\_material\_anio}, \texttt{idx\_resena\_material\_punt} \\
 \bottomrule
 \end{longtable}
 \end{center}
 
-\subsubsection{Consultas SQL}
+\subsubsection{Implementación de consultas en SQL}
 
-Las consultas están limpias en \texttt{querys/} y con \texttt{EXPLAIN
-(ANALYZE, BUFFERS)} en \texttt{sql/06\_experiments.sql}. Se reproducen
-aquí las dos más representativas del experimento.
+Las consultas se encuentran en la carpeta \texttt{querys/} en su versión limpia, y en \\ \texttt{sql/06\_experiments.sql} acompañadas de \texttt{EXPLAIN (ANALYZE, BUFFERS)} para el análisis de rendimiento. En esta sección se presentan las dos consultas más representativas del experimento: Q4 (consulta por rango) y Q3 (consulta de igualdad con mayor beneficio del índice).
 
-\paragraph{Q4 --- Usuarios con reseñas destacadas por rango de años.}
+\subsubsection*{Q4 --- Usuarios con reseñas destacadas por rango de años (consulta por rango)}
 
 \begin{lstlisting}
 SELECT DISTINCT u.Username, u.Email
-FROM   Usuario  u
-JOIN   Resena   r   ON r.Usuario_Username = u.Username
-                   AND r.Usuario_Email    = u.Email
-JOIN   Material m   ON m.Id = r.Material_Id
-WHERE  m.Anio_Publicacion BETWEEN 2000 AND 2005
-  AND  r.Puntaje > 8.5;
+FROM Usuario u
+JOIN Resena r   ON r.Usuario_Username = u.Username
+               AND r.Usuario_Email    = u.Email
+JOIN Material m ON m.Id = r.Material_Id
+WHERE m.Anio_Publicacion BETWEEN 2000 AND 2005
+  AND r.Puntaje > 8.5;
 \end{lstlisting}
 
-El predicado de \emph{rango} sobre \texttt{Anio\_Publicacion}
-(\texttt{BETWEEN 2000 AND 2005}) es el caso más ilustrativo de un índice
-B-tree: el índice \texttt{idx\_material\_anio} permite recorrer solo el
-tramo de años pedido en lugar de leer la tabla completa. El filtro adicional
-por puntaje alto (\texttt{Puntaje > 8.5}) se apoya en
-\texttt{idx\_resena\_material\_punt}, y el \texttt{DISTINCT} colapsa los
-usuarios que califican con más de una reseña.
+El predicado \texttt{BETWEEN} sobre el año de publicación recorre un tramo
+contiguo de las hojas del índice B-tree \texttt{idx\_material\_anio}, y el
+filtro selectivo por puntaje alto se apoya en \texttt{idx\_resena\_material\_punt}.
+Más adelante se analiza el plan en las distintas bases.
 
-\paragraph{Q3 --- Historial de lectura de un usuario.}
+
+\subsubsection*{Q3 --- Historial de lectura de un usuario}
 
 \begin{lstlisting}
 SELECT m.Id, m.Alias, le.Fecha
-FROM   Usuario  u
-JOIN   Leer     le  ON le.Usuario_Username = u.Username
-                   AND le.Usuario_Email    = u.Email
-JOIN   Material m   ON m.Id = le.Material_Id
-WHERE  u.Username = :username
-  AND  u.Email    = :email
-  AND  EXTRACT(YEAR FROM le.Fecha) > 2004
-ORDER  BY le.Fecha DESC;
+FROM Usuario u
+JOIN Leer le    ON le.Usuario_Username = u.Username
+               AND le.Usuario_Email    = u.Email
+JOIN Material m ON m.Id = le.Material_Id
+WHERE u.Username = :username AND u.Email = :email
+  AND EXTRACT(YEAR FROM le.Fecha) > 2004
+ORDER BY le.Fecha DESC;
 \end{lstlisting}
 
 El índice \texttt{idx\_leer\_usuario} es compuesto:
 \texttt{(Usuario\_Username, Usuario\_Email, Fecha DESC)}. Además de
 localizar las filas del usuario, entrega los resultados ya ordenados
 por fecha descendente, lo que evita el paso de \texttt{Sort}.
-
-\subsection{Metodología}
+\subsection{Metodología del experimento}
 
 \begin{itemize}
   \item \textbf{Herramienta de medición:} \texttt{EXPLAIN (ANALYZE,
   BUFFERS)}, que ejecuta la consulta y reporta el tiempo real y el plan
   elegido por el planificador.
 
-  \item \textbf{Número de corridas:} seis por consulta. La primera se
-  descarta (estado frío) y se trabaja con la mediana de las cinco restantes
-  para tener una medida estable en estado caliente.
+  \item \textbf{Número de corridas:} varias por consulta. La primera se
+  descarta (estado frío) y se trabaja con el estado caliente para tener una
+  medida estable.
 
   \item \textbf{Limpieza de caché entre corridas:} \texttt{DISCARD ALL}
   antes de cada corrida, para que el planificador vuelva a construir el
@@ -445,83 +1814,113 @@ por fecha descendente, lo que evita el paso de \texttt{Sort}.
   que elimina todos los índices secundarios. Los de \texttt{PRIMARY KEY} y
   \texttt{UNIQUE} no se pueden quitar porque son parte del esquema; por eso
   las consultas del experimento filtran por columnas que no son la primera
-  de ninguna PK (\texttt{Genero\_Nombre}, \texttt{agerate\_code},
-  \texttt{Usuario\_Username}/\texttt{Email}, \texttt{Anio\_Publicacion},
-  \texttt{Material\_Id} en \texttt{Resena})
-  o son agregaciones totales donde ningún índice aplica (Q2).
+  de ninguna PK (\texttt{Genero\_Nombre},
+  \texttt{Usuario\_Username}/\texttt{Email}, \texttt{Resena.Material\_Id},
+  \texttt{Anio\_Publicacion}) o son agregaciones totales donde el índice
+  secundario ayuda poco (Q2).
 
   \item \textbf{Escenario con índices:} se ejecuta \texttt{sql/04\_indexes.sql}
   y luego \texttt{ANALYZE} para que el planificador tenga estadísticas
   actualizadas.
-
-  \item El protocolo se repite para las cuatro bases.
 \end{itemize}
 
-\subsection{Índices del experimento}
+\subsection{Optimización de consultas}
 
-El experimento usa diez índices B-tree no únicos. Todos se ubican sobre
-columnas que no lideran ninguna PK (Sección~\ref{sec:cambios}, cambio K):
+El script \texttt{sql/04\_indexes.sql} crea los índices secundarios. El
+conjunto cubre las columnas de filtro y join de las cuatro consultas (Cambio K):
 
 \begin{center}
-\begin{tabular}{lll}
+\begin{tabular}{ll}
 \toprule
-\textbf{Nombre} & \textbf{Definición} & \textbf{Apoya} \\
+\textbf{Índice} & \textbf{Definición} \\
 \midrule
-\texttt{idx\_pertenece\_genero}   & \texttt{Pertenece(Genero\_Nombre)} & Q1 \\
-\texttt{idx\_material\_agerate}   & \texttt{Material(agerate\_code)} & Q1 \\
-\texttt{idx\_agerate\_code}       & \texttt{AgeRate(code)} & Q1 \\
-\texttt{idx\_resena\_material}    & \texttt{Resena(Material\_Id)} & Q2, Q4 \\
-\texttt{idx\_resena\_material\_punt} & \texttt{Resena(Material\_Id, Puntaje)} & Q2, Q4 \\
-\texttt{idx\_likes\_material}     & \texttt{Likes(Material\_Id)} & Q2 \\
-\texttt{idx\_leer\_material}      & \texttt{Leer(Material\_Id)} & Q2 \\
-\texttt{idx\_leer\_usuario}       & \texttt{Leer(Usuario\_Username, Usuario\_Email, Fecha DESC)} & Q3 \\
-\texttt{idx\_material\_anio}      & \texttt{Material(Anio\_Publicacion)} & Q4 \\
-\texttt{idx\_escribe\_autor}      & \texttt{Escribe(Autor\_Id)} & apoyo \\
+\texttt{idx\_pertenece\_genero}      & \texttt{Pertenece (Genero\_Nombre)} \\
+\texttt{idx\_material\_agerate}      & \texttt{Material (agerate\_code)} \\
+\texttt{idx\_agerate\_code}          & \texttt{AgeRate (code)} \\
+\texttt{idx\_resena\_material}       & \texttt{Resena (Material\_Id)} \\
+\texttt{idx\_resena\_material\_punt} & \texttt{Resena (Material\_Id, Puntaje)} \\
+\texttt{idx\_likes\_material}        & \texttt{Likes (Material\_Id)} \\
+\texttt{idx\_leer\_material}         & \texttt{Leer (Material\_Id)} \\
+\texttt{idx\_leer\_usuario}          & \texttt{Leer (Usuario\_Username, Usuario\_Email, Fecha DESC)} \\
+\texttt{idx\_material\_anio}         & \texttt{Material (Anio\_Publicacion)} \\
+\texttt{idx\_escribe\_autor}         & \texttt{Escribe (Autor\_Id)} \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-La PK de \texttt{Resena} es \texttt{Code}, de modo que \texttt{Material\_Id}
-no queda cubierto por ningún índice de PK: por eso \texttt{idx\_resena\_material}
-y \texttt{idx\_resena\_material\_punt} sí producen contraste en Q2 y Q4.
+
+\subsubsection{Plan de Consulta 1 (Q1 --- género + clasificación)}
+
+La Figura~\ref{fig:planq1} compara el plan en \texttt{bd\_literaria\_1m} sin y
+con índices. Sin índices, el motor recorre \texttt{pertenece}, \texttt{material}
+y \texttt{agerate} con \texttt{Seq Scan} y los combina con \texttt{Hash Join}.
+Con índices, el acceso a \texttt{pertenece} pasa a usar
+\texttt{idx\_pertenece\_genero}, reduciendo el tiempo de 626 a 477~ms ($-24\%$).
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/plan_q1_1m_sin.png}{\includegraphics[width=\textwidth]{img/plan_q1_1m_sin.png}}{}
+  \IfFileExists{img/plan_q1_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q1_1m_con.png}}{}
+  \caption{Q1 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba, \texttt{Seq Scan} sobre \texttt{pertenece}) vs.\ con índices (abajo, \texttt{idx\_pertenece\_genero}).}
+  \label{fig:planq1}
+\end{figure}
+
+\subsubsection{Plan de Consulta 2 (Q2 --- populares)}
+
+La Figura~\ref{fig:planq2} muestra que el plan apenas cambia: por ser una
+agregación total, el motor debe leer todas las filas de \texttt{likes},
+\texttt{leer} y \texttt{resena} (\texttt{HashAggregate}) con o sin índice
+secundario. La mejora (7432 a 5557~ms, $-25\%$) proviene principalmente del
+índice \texttt{idx\_resena\_material}, ya que la PK de \texttt{Resena} es
+\texttt{Code} y no cubre \texttt{Material\_Id}.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/plan_q2_1m_sin.png}{\includegraphics[width=\textwidth]{img/plan_q2_1m_sin.png}}{}
+  \IfFileExists{img/plan_q2_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q2_1m_con.png}}{}
+  \caption{Q2 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba) vs.\ con índices (abajo). La estructura de agregación total se mantiene.}
+  \label{fig:planq2}
+\end{figure}
+
+\subsubsection{Plan de Consulta 3 (Q3 --- historial)}
+
+Es el caso de mayor beneficio. La Figura~\ref{fig:planq3} muestra que sin
+índices el motor hace \texttt{Seq Scan} sobre \texttt{leer} y un \texttt{Sort};
+con índices, \texttt{idx\_leer\_usuario} resuelve el filtro por usuario, alimenta
+\texttt{Nested Loop} con la PK de \texttt{material} y entrega el orden por fecha
+sin \texttt{Sort}. El tiempo cae de 555 a 261~ms ($-53\%$).
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/plan_q3_1m_sin.png}{\includegraphics[width=\textwidth]{img/plan_q3_1m_sin.png}}{}
+  \IfFileExists{img/plan_q3_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q3_1m_con.png}}{}
+  \caption{Q3 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba) vs.\ con índices (abajo, \texttt{idx\_leer\_usuario} + \texttt{Nested Loop}, sin \texttt{Sort}).}
+  \label{fig:planq3}
+\end{figure}
+
+\subsubsection{Plan de Consulta 4 (Q4 --- usuarios por rango de años)}
+
+La Figura~\ref{fig:planq4} compara el plan en 1M. Con índices, el predicado
+\texttt{BETWEEN} sobre el año se resuelve con \texttt{idx\_material\_anio} y el
+filtro por puntaje con \texttt{idx\_resena\_material\_punt}, bajando de 3831 a
+3038~ms ($-21\%$).
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/plan_q4_1m_sin.png}{\includegraphics[width=\textwidth]{img/plan_q4_1m_sin.png}}{}
+  \IfFileExists{img/plan_q4_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q4_1m_con.png}}{}
+  \caption{Q4 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba) vs.\ con índices (abajo, \texttt{idx\_material\_anio} para el rango de años).}
+  \label{fig:planq4}
+\end{figure}
+
 
 \subsection{Plataforma de pruebas}
 
-Las mediciones se realizaron sobre PostgreSQL~16 en Ubuntu~24.04,
-con la configuración por defecto del servidor, en las cuatro bases
-descritas en la Sección~1.3.
+Las mediciones se realizaron sobre el servidor PostgreSQL desplegado en
+AWS (\texttt{18.214.247.229}), que contiene las cuatro bases de datos
+del proyecto.
 
 \subsection{Medición de tiempos}
-
-% ===========================================================================
-% PENDIENTE — Completar tras correr el experimento en el servidor desplegado.
-%
-% Instrucciones para Sergio (o quien tenga acceso al servidor):
-%
-%   Para cada base (bd_literaria_1k, 10k, 100k, 1m):
-%
-%   1. Conectarse:
-%      export PGPASSWORD='<TU_PASSWORD>'   # tomar de faker/.env (no versionado)
-%      psql -h <HOST> -p 5432 -U <USUARIO> -d bd_literaria_1m
-%
-%   2. Quitar índices secundarios:
-%      \i sql/05_drop_indexes.sql
-%      ANALYZE;
-%
-%   3. Correr las consultas y anotar "Execution Time" de cada una:
-%      \i sql/06_experiments.sql
-%
-%   4. Crear índices:
-%      \i sql/04_indexes.sql
-%      ANALYZE;
-%
-%   5. Correr de nuevo y anotar los nuevos "Execution Time":
-%      \i sql/06_experiments.sql
-%
-%   Con esos 32 valores (4 consultas × 4 bases × 2 escenarios) se completan
-%   las dos tablas de abajo, se generan los gráficos y se redactan los
-%   análisis que aparecen como pendientes en este documento.
-% ===========================================================================
 
 \subsubsection{Sin índices}
 
@@ -531,10 +1930,10 @@ descritas en la Sección~1.3.
 \textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
   & \textbf{100K (ms)} & \textbf{1M (ms)} \\
 \midrule
-Q1 (género+rango) &  301 &  415 &  451 &  626 \\
-Q2 (populares)    &  848 &  924 & 1028 & 7432 \\
-Q3 (historial)    &  293 &  353 &  427 &  555 \\
-Q4 (rango años)   &  890 &  915 & 1139 & 3831 \\
+Q1 (género+rango)   &  301 &  415 &  451 &  626 \\
+Q2 (populares)      &  848 &  924 & 1028 & 7432 \\
+Q3 (historial)      &  293 &  353 &  427 &  555 \\
+Q4 (usuarios rango) &  890 &  915 & 1139 & 3831 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -547,115 +1946,199 @@ Q4 (rango años)   &  890 &  915 & 1139 & 3831 \\
 \textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
   & \textbf{100K (ms)} & \textbf{1M (ms)} \\
 \midrule
-Q1 (género+rango) &  283 &  337 &  310 &  477 \\
-Q2 (populares)    &  881 &  913 &  980 & 5557 \\
-Q3 (historial)    &  297 &  283 &  318 &  261 \\
-Q4 (rango años)   &  817 &  913 & 1070 & 3038 \\
+Q1 (género+rango)   &  283 &  337 &  310 &  477 \\
+Q2 (populares)      &  881 &  913 &  980 & 5557 \\
+Q3 (historial)      &  297 &  283 &  318 &  261 \\
+Q4 (usuarios rango) &  817 &  913 & 1070 & 3038 \\
 \bottomrule
 \end{tabular}
 \end{center}
 
-\textbf{Lectura de las tablas.} En 1K y 10K el índice apenas se nota: en
-tablas pequeñas el planificador a menudo ignora el índice y hace
-\texttt{Seq Scan}, y dos casos (Q2 y Q3 en 1K) incluso salen levemente más
-lentos \emph{con} índice (881 vs.\ 848 ms en Q2; 297 vs.\ 293 ms en Q3). No es
-un error: es ruido de medición sobre tiempos casi idénticos y evidencia de que
-un índice no siempre ayuda. El contraste real aparece en 100K y 1M, cuando la
-tabla ya no cabe holgada en memoria y el plan basado en índice gana terreno
-(\emph{crossover} por selectividad). El mayor beneficio relativo es Q3, que en
-1M baja de 555 a 261 ms ($-53\%$); Q2, una agregación total, es el que menos
-mejora.
+
+\subsection{Gráficos del experimento}
+
+La Figura~\ref{fig:barras} compara, para cada consulta, el tiempo sin índices
+(rojo) y con índices (verde) en los cuatro volúmenes, en escala logarítmica. Se
+aprecia que el beneficio del índice aparece y crece con el tamaño de la base, y
+que en Q2 (agregación total) las barras casi coinciden.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=2 by 2, vertical sep=1.9cm, horizontal sep=1.7cm},
+  width=8cm, height=5.2cm,
+  ybar, bar width=5pt,
+  ymode=log,
+  symbolic x coords={1K,10K,100K,1M}, xtick=data,
+  ymajorgrids, enlarge x limits=0.18,
+  ylabel={ms (log)},
+  title style={font=\footnotesize\bfseries},
+  label style={font=\footnotesize}, tick label style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west, draw=none, fill=none},
+]
+\nextgroupplot[title={Q1 --- género + clasificación}]
+\addplot[fill=barSin,draw=barSin] coordinates {(1K,301)(10K,415)(100K,451)(1M,626)};
+\addplot[fill=barCon,draw=barCon] coordinates {(1K,283)(10K,337)(100K,310)(1M,477)};
+\legend{Sin índices, Con índices}
+\nextgroupplot[title={Q2 --- populares}]
+\addplot[fill=barSin,draw=barSin] coordinates {(1K,848)(10K,924)(100K,1028)(1M,7432)};
+\addplot[fill=barCon,draw=barCon] coordinates {(1K,881)(10K,913)(100K,980)(1M,5557)};
+\nextgroupplot[title={Q3 --- historial}]
+\addplot[fill=barSin,draw=barSin] coordinates {(1K,293)(10K,353)(100K,427)(1M,555)};
+\addplot[fill=barCon,draw=barCon] coordinates {(1K,297)(10K,283)(100K,318)(1M,261)};
+\nextgroupplot[title={Q4 --- usuarios por rango}]
+\addplot[fill=barSin,draw=barSin] coordinates {(1K,890)(10K,915)(100K,1139)(1M,3831)};
+\addplot[fill=barCon,draw=barCon] coordinates {(1K,817)(10K,913)(100K,1070)(1M,3038)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Tiempo de ejecución sin vs.\ con índices por consulta y volumen (escala logarítmica).}
+\label{fig:barras}
+\end{figure}
+
+La Figura~\ref{fig:mejora} resume la mejora porcentual que aporta el índice en la
+base de 1M: máxima en Q3 (historial) y mínima en Q4, con Q2 limitada por ser una
+agregación total.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  ybar, width=0.85\textwidth, height=6cm, bar width=22pt,
+  symbolic x coords={Q1,Q2,Q3,Q4}, xtick=data,
+  ymin=0, ymax=62, ylabel={Mejora del índice en 1M (\%)},
+  nodes near coords, nodes near coords style={font=\footnotesize},
+  every node near coord/.append style={/pgf/number format/precision=0, /pgf/number format/fixed},
+  enlarge x limits=0.18, ymajorgrids,
+]
+\addplot[fill=barCon,draw=barCon] coordinates {(Q1,24)(Q2,25)(Q3,53)(Q4,21)};
+\end{axis}
+\end{tikzpicture}
+\caption{Mejora porcentual del índice por consulta en \texttt{bd\_literaria\_1m}.}
+\label{fig:mejora}
+\end{figure}
+
+Finalmente, la Figura~\ref{fig:escala} muestra cómo crece el tiempo sin índices al
+aumentar el volumen (ejes logarítmicos). Q2 (populares) es la que más crece, por
+ser una agregación total sin filtro; las consultas selectivas crecen de forma más
+controlada.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.9\textwidth, height=7cm, xmode=log, ymode=log,
+  xlabel={Filas de interacción (log)}, ylabel={Tiempo sin índices (ms, log)},
+  legend pos=north west, legend style={font=\footnotesize},
+  grid=both, mark options={scale=0.9},
+]
+\addplot coordinates {(1000,301)(10000,415)(100000,451)(1000000,626)};
+\addplot coordinates {(1000,848)(10000,924)(100000,1028)(1000000,7432)};
+\addplot coordinates {(1000,293)(10000,353)(100000,427)(1000000,555)};
+\addplot coordinates {(1000,890)(10000,915)(100000,1139)(1000000,3831)};
+\legend{Q1 género+rango, Q2 populares, Q3 historial, Q4 usuarios rango}
+\end{axis}
+\end{tikzpicture}
+\caption{Escalamiento del costo sin índices al aumentar el volumen (ejes logarítmicos).}
+\label{fig:escala}
+\end{figure}
+
 
 \subsection{Resultados}
 
-% PENDIENTE — Una vez completadas las tablas de tiempos, esta sección debe
-% incluir:
-%   - Un gráfico de barras por consulta (sin vs. con índice, en las 4 bases).
-%   - Un gráfico de aceleración (speedup) en la base de 1M.
-%   - Análisis por consulta explicando qué plan usa el motor y por qué.
-%
-% Para cada consulta conviene capturar también la salida de:
-%   EXPLAIN (ANALYZE, BUFFERS) <consulta>
-% tanto sin índice como con índice, para incluirla como evidencia.
+\subsubsection{Consulta 1 (Q1 --- género + clasificación)}
 
-\textit{[Sección pendiente de completar una vez obtenidos los tiempos del
-servidor.]}
+El índice ayuda de forma clara y creciente con el volumen: la mejora pasa de
+$-6\%$ en 1K a $-31\%$ en 100K y $-24\%$ en 1M (626 a 477~ms). El plan de la
+Figura~\ref{fig:planq1} confirma el cambio de \texttt{Seq Scan} sobre
+\texttt{pertenece} a un acceso por \texttt{idx\_pertenece\_genero}.
 
-\subsubsection{Q1 --- Materiales de un género acotados por clasificación de edad}
+\subsubsection{Consulta 2 (Q2 --- populares)}
 
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de cómo el filtro por igualdad de género (\texttt{idx\_pertenece\_genero})
-y el rango sobre \texttt{code} (\texttt{idx\_material\_agerate},
-\texttt{idx\_agerate\_code}) combinan acceso por igualdad y por rango.]}
+Es la consulta más pesada (7432~ms sin índice en 1M, la única que supera el
+segundo de forma holgada). Al ser una agregación total, el plan
+(Figura~\ref{fig:planq2}) no cambia de estructura; el índice solo recorta el
+costo de leer \texttt{Resena} por \texttt{Material\_Id} (PK = \texttt{Code}),
+con una mejora de $-25\%$ ($\approx 1.9$~s absolutos). Es el ejemplo de
+``cuándo el índice ayuda poco''.
 
-\subsubsection{Q2 --- Materiales más populares}
+\subsubsection{Consulta 3 (Q3 --- historial)}
 
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de por qué el índice no aporta en agregaciones totales (en 1M baja
-solo de 7432 a 5557 ms) y por qué \texttt{idx\_resena\_material} es el único
-que ayuda, dado que \texttt{Material\_Id} no lidera la PK de \texttt{Resena}.]}
+Es el caso estrella: $-53\%$ en 1M (555 a 261~ms, más de $2\times$ más rápida).
+El índice compuesto \texttt{idx\_leer\_usuario} filtra por usuario y entrega el
+orden por fecha sin \texttt{Sort} (Figura~\ref{fig:planq3}). En 1K el índice es
+indiferente (293 vs 297~ms): el planificador prefiere \texttt{Seq Scan} en una
+tabla pequeña.
 
-\subsubsection{Q3 --- Historial de lectura de un usuario}
+\subsubsection{Consulta 4 (Q4 --- usuarios por rango de años)}
 
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de \texttt{idx\_leer\_usuario} y cómo, además de filtrar por
-usuario y por el año de la lectura, entrega el orden ya resuelto y evita el
-paso de Sort. Es el mayor ganador del índice: en 1M baja de 555 a 261 ms.]}
-
-\subsubsection{Q4 --- Usuarios con reseñas destacadas por rango de años}
-
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación del Bitmap Index Scan sobre \texttt{idx\_material\_anio} y la
-bondad del índice B-tree en predicados BETWEEN selectivos, junto con el filtro
-por puntaje alto y el \texttt{DISTINCT}. También analizar qué ocurre con rangos
-amplios (el punto de cruce por selectividad).]}
+El predicado \texttt{BETWEEN} sobre el año se beneficia de
+\texttt{idx\_material\_anio}: $-21\%$ en 1M (3831 a 3038~ms). Junto con Q1,
+demuestra el comportamiento de un índice B-tree sobre predicados de rango.
 
 \subsection{El costo de los índices}
-
-% PENDIENTE — Correr sql/07_index_overhead.sql en la base de 1M y anotar:
-%   - Tiempo de INSERT masivo sin índices.
-%   - Tiempo de INSERT masivo con índices.
-%   - Comparación de lectura no selectiva con y sin índice (forzado).
 
 \textit{[Pendiente. El script \texttt{sql/07\_index\_overhead.sql} mide el
 costo en escrituras y en lecturas no selectivas. Ejecutarlo sobre
 \texttt{bd\_literaria\_1m} y completar con los resultados.]}
 
-\subsection{Escalamiento por encima del millón (punto extra)}
 
-\textit{[Pendiente. Una vez obtenidos los tiempos de las cuatro bases, graficar
-el crecimiento del costo sin índices para ver si el patrón es lineal, y comparar
-con el comportamiento con índices. Discutir qué estrategias serían necesarias
-para volúmenes mayores al millón (vistas materializadas, particionamiento,
-réplicas de lectura).]}
+\subsection{Complejidad al escalar por encima del millón (extra)}
+
+Los tiempos sin índices crecen con el volumen en las cuatro consultas; el caso
+más marcado es Q2, que pasa de $\approx 1$~s en 100K a $7.4$~s en 1M por ser una
+agregación total sin filtro. Para volúmenes mayores al millón, las agregaciones
+totales como Q2 son el principal límite y se beneficiarían de estrategias
+adicionales: vistas materializadas (precalcular la popularidad), particionamiento
+de las tablas de interacción y réplicas de lectura. Las consultas selectivas bien
+indexadas (Q1, Q3, Q4) escalan de forma mucho más controlada.
+
 
 \subsection{Análisis y discusión}
 
-\textit{[Pendiente. Una vez con los datos completos, redactar el análisis
-comparativo de los tres comportamientos observados: cuándo el índice ayuda mucho,
-cuándo poco y cuándo no ayuda. Incluir la aceleración (speedup) de cada consulta
-en la base de 1M como referencia principal.]}
+El experimento muestra los tres comportamientos esperados de un índice
+secundario. El índice \textbf{ayuda} cuando el filtro es selectivo: el mayor
+beneficio es Q3 (historial, $-53\%$ en 1M), seguido de Q1 (género + rango) y Q4
+(rango de años). El índice \textbf{ayuda poco} en Q2, una agregación total que
+debe leer todas las filas con o sin índice. Y en las bases pequeñas (1K, 10K) el
+índice es \textbf{indiferente o incluso contraproducente} (en 1K, Q2 y Q3 salen
+levemente más lentas con índice): el planificador prefiere \texttt{Seq Scan}
+porque recorrer una tabla pequeña es más barato que saltar por el índice. Ese
+cruce por selectividad entre escenarios es, en sí, un resultado: indexar es una
+decisión por consulta y por volumen, no una receta universal. La medición se hizo
+con \texttt{EXPLAIN (ANALYZE, BUFFERS)} en estado caliente para que la diferencia
+refleje el plan y no el efecto de la caché.
 
-% ==================================================================
+% =================================================
 \section{Conclusiones}
 
 \begin{itemize}
-  \item Se implementó en PostgreSQL el modelo relacional del Hito 1: 25 tablas
-  con restricciones de integridad (PK, FK, UNIQUE, NOT NULL, CHECK), cuatro
-  triggers para reglas multi-tabla (dos de ellos diferidos) y cinco vistas de
-  usuario. Los doce ajustes al modelo se documentaron de forma transparente.
+  \item Se implementó en PostgreSQL el modelo relacional del Hito~1: 27
+  tablas con restricciones de integridad (PK, FK, UNIQUE, NOT NULL,
+  CHECK), cuatro triggers para reglas multi-tabla (dos de ellos
+  diferidos) y seis vistas de usuario.
 
-  \item Se generaron cuatro escenarios de volumen reproducibles, hasta
-  aproximadamente 3.86 millones de filas en el escenario de 1M, mediante un
-  generador de datos sintéticos propio con semilla fija y carga por \texttt{COPY}.
+  \item Se generaron cuatro escenarios de volumen reproducibles
+  (1K, 10K, 100K y 1M de interacciones) mediante un generador de
+  datos sintéticos propio con semilla fija y carga por \texttt{COPY},
+  alcanzando aproximadamente 3.86 millones de filas en la base de 1M.
 
-  \item \textit{[Pendiente: agregar las conclusiones del experimento una vez
-  obtenidos los tiempos reales. Deben mencionar qué consultas se beneficiaron
-  del índice y en qué medida, el comportamiento de la consulta por rango (Q4),
-  y el costo de los índices en escrituras.]}
+  \item Doce ajustes al modelo del Hito~1 fueron necesarios al pasar
+  al código físico; todos están documentados y justificados en
+  \texttt{docs/cambios\_respecto\_hito1.md}. Entre ellos, la tabla
+  \texttt{ImagenMaterial} que almacena las portadas de cada material en la
+  propia base de datos (Cambio M).
+
+  \item El experimento sobre las cuatro bases confirma los tres
+  comportamientos de un índice secundario: ayuda mucho en consultas
+  selectivas (Q3 historial, $-53\%$ en 1M; Q1 y Q4 por rango), ayuda poco
+  en la agregación total (Q2, $-25\%$ y solo por el índice de \texttt{Resena})
+  y es indiferente o contraproducente en las bases pequeñas, donde el
+  planificador prefiere \texttt{Seq Scan}.
 \end{itemize}
 
-% ==================================================================
+
+% =================================================
 \section{Anexos}
 
 \subsection{Estructura del repositorio}
@@ -675,23 +2158,23 @@ en la base de 1M como referencia principal.]}
 \texttt{querys/}                     & Las cuatro consultas limpias (Q1--Q4). \\
 \texttt{faker/}                      & Generador de datos sintéticos. \\
 \texttt{dumps/}                      & Dumps restaurables de las cuatro bases. \\
-\texttt{results/}                    & CSV de resultados y gráficos (pendiente). \\
+\texttt{results/}                    & CSV de resultados (tiempos con/sin índices). \\
 \texttt{docs/}                       & Este informe y el detalle de cambios. \\
 \bottomrule
 \end{tabular}
 \end{center}
 
+
+
 \subsection{Video de la experimentación}
 
-\textit{[Pendiente. El video debe mostrar la experimentación completa sobre la
-base de 1 millón de registros: medición sin índices, creación de índices,
-medición con índices y comparación de planes y tiempos. El guion detallado
-está en \texttt{video/README\_guion.md} del repositorio.]}
+Como exige la rúbrica, se anexa un video que muestra la experimentación sobre la
+base de \textbf{1 millón} de registros, ejecutando cada consulta con y sin
+índices y comentando los planes y tiempos resultantes. El enlace se
+encuentran en
 
-\subsection{Planes de ejecución (Q4, base 1M)}
 
-\textit{[Pendiente. Capturar la salida de \texttt{EXPLAIN (ANALYZE, BUFFERS)}
-para la consulta Q4 sobre \texttt{bd\_literaria\_1m}, primero sin el índice
-\texttt{idx\_material\_anio} y luego con él. Pegar los resultados aquí.]}
+
+
 
 \end{document}
