@@ -3,12 +3,24 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Material, MaterialDetalle, Popular, Resena, Usuario, HistorialItem, SearchResult, Options } from './models';
 
-// El API se sirve en el mismo host desde el que se abre la app, puerto 7000:
-//  - en desarrollo (ng serve en localhost) -> http://localhost:7000/api
-//  - desplegado en el servidor             -> http://<ip-servidor>:7000/api
-// Así no hay que recompilar al cambiar de entorno.
-const HOST = typeof location !== 'undefined' && location.hostname ? location.hostname : 'localhost';
-const API = `http://${HOST}:7000/api`;
+// Base del API. Orden de resolución (sin recompilar):
+//  1) window.__API_BASE__  -> override manual (editable en dist/index.html).
+//  2) Si la app se abre en localhost/127.0.0.1/file:// pero el backend NO está
+//     local, se apunta al API desplegado (AWS, puerto 7000). Así el `ng serve`
+//     de desarrollo consume la API real sin levantar el backend en la laptop.
+//  3) En cualquier otro host (ej. servida desde el propio servidor) usa ese
+//     mismo host en el puerto 7000.
+const DEPLOYED_API = 'http://18.214.247.229:7000/api';
+
+function resolveApiBase(): string {
+  const override = (globalThis as { __API_BASE__?: string }).__API_BASE__;
+  if (override) return override;
+  const host = typeof location !== 'undefined' ? location.hostname : '';
+  if (!host || host === 'localhost' || host === '127.0.0.1') return DEPLOYED_API;
+  return `http://${host}:7000/api`;
+}
+
+const API = resolveApiBase();
 
 @Injectable({ providedIn: 'root' })
 export class Api {
