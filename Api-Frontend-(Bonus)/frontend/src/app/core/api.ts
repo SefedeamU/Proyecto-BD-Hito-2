@@ -3,9 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Material, MaterialDetalle, Popular, Resena, Usuario, HistorialItem, SearchResult, Options } from './models';
 
-// API desplegada en el servidor (puerto 7000). Para desarrollo local cambia a
-// 'http://localhost:7000/api'.
-const API = 'http://18.214.247.229:7000/api';
+// El API se sirve en el mismo host desde el que se abre la app, puerto 7000:
+//  - en desarrollo (ng serve en localhost) -> http://localhost:7000/api
+//  - desplegado en el servidor             -> http://<ip-servidor>:7000/api
+// Así no hay que recompilar al cambiar de entorno.
+const HOST = typeof location !== 'undefined' && location.hostname ? location.hostname : 'localhost';
+const API = `http://${HOST}:7000/api`;
 
 @Injectable({ providedIn: 'root' })
 export class Api {

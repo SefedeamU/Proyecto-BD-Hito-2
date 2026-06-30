@@ -37,12 +37,13 @@ interface Row { genero: string; items: Material[]; }
       <section class="row-section">
         <div class="row-head"><h2>🔥 Más populares</h2><a routerLink="/catalog">Ver todo</a></div>
         <div class="carousel">
-          @if (popular().length) {
-            @for (m of popular(); track m.id) { <app-material-card [m]="m" /> }
-          } @else {
+          @if (popularLoading()) {
             @for (i of skeletons; track i) { <app-skeleton-card /> }
+          } @else {
+            @for (m of popular(); track m.id) { <app-material-card [m]="m" /> }
           }
         </div>
+        @if (apiDown()) { <p class="muted">No se pudo conectar con el API (puerto 7000).</p> }
       </section>
 
       @for (row of rows(); track row.genero) {
@@ -95,18 +96,27 @@ export class Home {
   popular = signal<Material[]>([]);
   rows = signal<Row[]>([]);
   loadingRows = signal(true);
+  popularLoading = signal(true);
+  apiDown = signal(false);
 
   constructor() {
-    this.api.stats().subscribe((s) => this.stats.set(s));
-    this.api.popular(18).subscribe((p) => this.popular.set(p));
-    this.api.genres().subscribe((gs) => {
-      const pick = gs.slice(0, 6);
-      let pending = pick.length;
-      pick.forEach((g) =>
-        this.api.materials({ genre: g, limit: 14 }).subscribe((items) => {
-          this.rows.update((r) => [...r, { genero: g, items }]);
-          if (--pending === 0) this.loadingRows.set(false);
-        }));
+    this.api.stats().subscribe({ next: (s) => this.stats.set(s), error: () => this.apiDown.set(true) });
+    this.api.popular(18).subscribe({
+      next: (p) => { this.popular.set(p); this.popularLoading.set(false); },
+      error: () => { this.popularLoading.set(false); this.apiDown.set(true); },
+    });
+    this.api.genres().subscribe({
+      next: (gs) => {
+        const pick = gs.slice(0, 6);
+        let pending = pick.length;
+        if (!pending) this.loadingRows.set(false);
+        pick.forEach((g) =>
+          this.api.materials({ genre: g, limit: 14 }).subscribe((items) => {
+            this.rows.update((r) => [...r, { genero: g, items }]);
+            if (--pending === 0) this.loadingRows.set(false);
+          }));
+      },
+      error: () => { this.loadingRows.set(false); this.apiDown.set(true); },
     });
   }
 }

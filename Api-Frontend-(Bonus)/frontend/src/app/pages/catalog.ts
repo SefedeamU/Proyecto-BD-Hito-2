@@ -63,7 +63,7 @@ function emptyFilters(): Filters {
             <div class="f"><label for="tipo">Tipo</label>
               <select id="tipo" [(ngModel)]="f.tipo">
                 <option value="">Cualquiera</option>
-                @for (t of opts()?.tipos; track t) { <option [value]="t">{{ t }}</option> }
+                @for (t of tipos; track t) { <option [value]="t">{{ t }}</option> }
               </select></div>
             <div class="f"><label for="idioma">Idioma</label>
               <select id="idioma" [(ngModel)]="f.idioma">
@@ -191,7 +191,11 @@ function emptyFilters(): Filters {
             </div>
           </div>
 
-          @if (loading()) {
+          @if (error()) {
+            <div class="empty"><span class="emoji">🔌</span><h3>No se pudo conectar con el API</h3>
+              <p class="muted">Verifica que el backend esté corriendo en el puerto 7000 ({{ apiHost() }}).</p>
+              <button class="btn btn-mustard" (click)="apply()" style="margin-top:10px">Reintentar</button></div>
+          } @else if (loading()) {
             <div class="grid">@for (i of sk; track i) { <app-skeleton-card /> }</div>
           } @else if (items().length) {
             <div class="grid stagger">
@@ -261,12 +265,15 @@ export class Catalog {
   private api = inject(Api);
   private route = inject(ActivatedRoute);
   sk = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  tipos = ['Libro', 'Ensayo', 'Revista', 'Poema', 'AudioBook']; // dominio fijo (CHECK)
   opts = signal<Options | null>(null);
   items = signal<SearchResult[]>([]);
   loading = signal(true);
   loadingMore = signal(false);
   canLoadMore = signal(false);
   panel = signal(false);
+  error = signal(false);
+  apiHost = () => (typeof location !== 'undefined' ? location.hostname || 'localhost' : 'localhost');
   f: Filters = emptyFilters();
 
   activeCount(): number {
@@ -275,10 +282,13 @@ export class Catalog {
   }
 
   constructor() {
-    this.api.options().subscribe((o) => this.opts.set(o));
+    this.api.options().subscribe({
+      next: (o) => this.opts.set(o),
+      error: () => this.opts.set(null), // los desplegables quedan vacíos pero la app no se rompe
+    });
     // permite llegar con ?genre=Ficcion desde la home
     this.route.queryParams.subscribe((p) => {
-      if (p['genre']) this.f['genero'] = p['genre'];
+      if (p['genre']) this.f.genero = p['genre'];
       this.apply();
     });
   }
@@ -289,20 +299,27 @@ export class Catalog {
 
   apply(): void {
     this.loading.set(true);
+    this.error.set(false);
     this.panel.set(false);
-    this.api.search(this.params(0)).subscribe((res) => {
-      this.items.set(res);
-      this.canLoadMore.set(res.length === PAGE);
-      this.loading.set(false);
+    this.api.search(this.params(0)).subscribe({
+      next: (res) => {
+        this.items.set(res);
+        this.canLoadMore.set(res.length === PAGE);
+        this.loading.set(false);
+      },
+      error: () => { this.loading.set(false); this.error.set(true); },
     });
   }
 
   loadMore(): void {
     this.loadingMore.set(true);
-    this.api.search(this.params(this.items().length)).subscribe((res) => {
-      this.items.update((cur) => [...cur, ...res]);
-      this.canLoadMore.set(res.length === PAGE);
-      this.loadingMore.set(false);
+    this.api.search(this.params(this.items().length)).subscribe({
+      next: (res) => {
+        this.items.update((cur) => [...cur, ...res]);
+        this.canLoadMore.set(res.length === PAGE);
+        this.loadingMore.set(false);
+      },
+      error: () => this.loadingMore.set(false),
     });
   }
 
