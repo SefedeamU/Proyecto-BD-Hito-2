@@ -1019,6 +1019,17 @@ columnas adicionales.
 
 \end{itemize}
 
+\subsubsection{Relaciones ternarias}
+
+El modelo del sistema no contiene relaciones ternarias: todas las asociaciones
+se modelaron como relaciones binarias (1:N o M:N) y una jerarquía
+\textit{Is-A} sobre \textit{Material}. Los casos que en un primer análisis
+podrían parecer ternarios se resolvieron sin un tercer participante: por
+ejemplo, una reseña relaciona usuario y material pero el resto de su contexto
+(puntaje, fecha, texto) son atributos propios de la entidad asociativa
+\textit{Reseña}, no una tercera entidad. Por lo tanto, no se requiere ninguna
+tabla derivada de una relación ternaria.
+
 
 % -------------------------------------------------
 \subsection{Diccionario de datos}
@@ -2093,6 +2104,46 @@ controlada.
 \label{fig:escala}
 \end{figure}
 
+La Figura~\ref{fig:lineas} traza, para cada consulta, la tendencia del tiempo sin
+índices (rojo) frente a con índices (verde) a medida que crece el volumen (eje $y$
+logarítmico). Las líneas hacen visible \emph{dónde} se separan: en Q3 la curva
+verde se aplana e incluso baja en 1M, mientras que en Q2 ambas líneas se disparan
+casi juntas, confirmando que la agregación total apenas aprovecha el índice.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+\begin{groupplot}[
+  group style={group size=2 by 2, vertical sep=1.9cm, horizontal sep=1.7cm},
+  width=8cm, height=5.2cm,
+  ymode=log,
+  symbolic x coords={1K,10K,100K,1M}, xtick=data,
+  ymajorgrids, enlarge x limits=0.12,
+  ylabel={ms (log)},
+  title style={font=\footnotesize\bfseries},
+  label style={font=\footnotesize}, tick label style={font=\footnotesize},
+  legend style={font=\scriptsize, at={(0.03,0.97)}, anchor=north west, draw=none, fill=none},
+  mark options={scale=0.8},
+]
+\nextgroupplot[title={Q1 --- género + clasificación}]
+\addplot[color=barSin,mark=*] coordinates {(1K,301)(10K,415)(100K,451)(1M,626)};
+\addplot[color=barCon,mark=square*] coordinates {(1K,283)(10K,337)(100K,310)(1M,477)};
+\legend{Sin índices, Con índices}
+\nextgroupplot[title={Q2 --- populares}]
+\addplot[color=barSin,mark=*] coordinates {(1K,848)(10K,924)(100K,1028)(1M,7432)};
+\addplot[color=barCon,mark=square*] coordinates {(1K,881)(10K,913)(100K,980)(1M,5557)};
+\nextgroupplot[title={Q3 --- historial}]
+\addplot[color=barSin,mark=*] coordinates {(1K,293)(10K,353)(100K,427)(1M,555)};
+\addplot[color=barCon,mark=square*] coordinates {(1K,297)(10K,283)(100K,318)(1M,261)};
+\nextgroupplot[title={Q4 --- usuarios por rango}]
+\addplot[color=barSin,mark=*] coordinates {(1K,890)(10K,915)(100K,1139)(1M,3831)};
+\addplot[color=barCon,mark=square*] coordinates {(1K,817)(10K,913)(100K,1070)(1M,3038)};
+\end{groupplot}
+\end{tikzpicture}
+\caption{Tendencia del tiempo sin vs.\ con índices por consulta al crecer el volumen (líneas, eje $y$ logarítmico).}
+\label{fig:lineas}
+\end{figure}
+
 
 \subsection{Resultados}
 
@@ -2220,8 +2271,12 @@ refleje el plan y no el efecto de la caché.
 
 Como exige la rúbrica, se anexa un video que muestra la experimentación sobre la
 base de \textbf{1 millón} de registros, ejecutando cada consulta con y sin
-índices y comentando los planes y tiempos resultantes. El enlace se
-encuentran en
+índices y comentando los planes y tiempos resultantes. El video está disponible
+en el siguiente enlace:
+
+\begin{center}
+\url{https://drive.google.com/drive/folders/1jdgxZYFMrnEgUc8qovpXz2yurGkW_LiI?usp=sharing}
+\end{center}
 
 
 
