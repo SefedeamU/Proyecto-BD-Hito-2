@@ -57,3 +57,25 @@ export interface HistorialItem {
   fecha: string;
   portadas: string[];
 }
+
+export interface SearchResult extends Material {
+  total_likes: number;
+  total_lecturas: number;
+  total_resenas: number;
+  promedio_puntaje: number | null;
+  num_autores: number;
+}
+
+export interface Options {
+  tipos: string[];
+  idiomas: string[];
+  paises: string[];
+  editorial_paises: string[];
+  autor_paises: string[];
+  generos: string[];
+  subgeneros: string[];
+  agerates: string[];
+  premios: string[];
+  premio_categorias: string[];
+  tipos_arte: string[];
+}

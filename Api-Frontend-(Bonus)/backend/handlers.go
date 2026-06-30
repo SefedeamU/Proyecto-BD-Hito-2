@@ -31,6 +31,71 @@ func qInt(r *http.Request, key string, def int) int {
 	return def
 }
 
+func qStr(r *http.Request, k string) string { return strings.TrimSpace(r.URL.Query().Get(k)) }
+
+func qIntPtr(r *http.Request, k string) *int {
+	if v := r.URL.Query().Get(k); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return &n
+		}
+	}
+	return nil
+}
+
+func qFloatPtr(r *http.Request, k string) *float64 {
+	if v := r.URL.Query().Get(k); v != "" {
+		if f, err := strconv.ParseFloat(v, 64); err == nil {
+			return &f
+		}
+	}
+	return nil
+}
+
+func qBool(r *http.Request, k string) bool {
+	v := r.URL.Query().Get(k)
+	return v == "1" || v == "true" || v == "on"
+}
+
+func (a *App) search(w http.ResponseWriter, r *http.Request) {
+	limit := qInt(r, "limit", 24)
+	if limit > 60 {
+		limit = 60
+	}
+	p := SearchParams{
+		Tipo: qStr(r, "tipo"), Idioma: qStr(r, "idioma"), Pais: qStr(r, "pais"),
+		AnioMin: qIntPtr(r, "anio_min"), AnioMax: qIntPtr(r, "anio_max"),
+		PaginasMin: qIntPtr(r, "paginas_min"), PaginasMax: qIntPtr(r, "paginas_max"),
+		Editorial: qStr(r, "editorial"), EditorialPais: qStr(r, "editorial_pais"),
+		FundacionMin: qIntPtr(r, "fundacion_min"), FundacionMax: qIntPtr(r, "fundacion_max"),
+		AgeRate: qStr(r, "agerate"), ViolenciaMax: qIntPtr(r, "violencia_max"), SexualidadMax: qIntPtr(r, "sexualidad_max"),
+		Genero: qStr(r, "genero"), SubGenero: qStr(r, "subgenero"),
+		Autor: qStr(r, "autor"), AutorID: qIntPtr(r, "autor_id"), AutorPais: qStr(r, "autor_pais"),
+		ConPremio: qBool(r, "con_premio"), Premio: qStr(r, "premio"),
+		PremioCategoria: qStr(r, "premio_categoria"), RelevanciaMin: qIntPtr(r, "relevancia_min"),
+		ConIlustraciones: qBool(r, "con_ilustraciones"), TipoArte: qStr(r, "tipo_arte"),
+		Artista: qStr(r, "artista"), ConCuriosidades: qBool(r, "con_curiosidades"),
+		MinLikes: qIntPtr(r, "min_likes"), MinLecturas: qIntPtr(r, "min_lecturas"), MinResenas: qIntPtr(r, "min_resenas"),
+		PuntajeMin: qFloatPtr(r, "puntaje_min"), PuntajeMax: qFloatPtr(r, "puntaje_max"),
+		MinAutores: qIntPtr(r, "min_autores"), MultiAutor: qBool(r, "multi_autor"), ConResenas: qBool(r, "con_resenas"),
+		Order: qStr(r, "order"), Limit: limit, Offset: qInt(r, "offset", 0),
+	}
+	res, err := a.store.Search(r.Context(), p)
+	if err != nil {
+		fail(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, res)
+}
+
+func (a *App) options(w http.ResponseWriter, r *http.Request) {
+	o, err := a.store.Options(r.Context())
+	if err != nil {
+		fail(w, 500, err.Error())
+		return
+	}
+	writeJSON(w, 200, o)
+}
+
 func (a *App) health(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, 200, map[string]any{"status": "ok", "db": env("PGDATABASE", "bd_literaria_10k")})
 }

@@ -7,20 +7,9 @@
       <span class="logo-text">Biblioteca <b>de Alejandría</b></span>
     </a>
 
-    <form class="searchbar" role="search" (submit)="$event.preventDefault(); search()">
-      <label class="sr-only" for="nav-search">Buscar materiales</label>
-      <input
-        id="nav-search"
-        type="search"
-        autocomplete="off"
-        placeholder="Buscar materiales, alias…"
-        [value]="query()"
-        (input)="onInput($any($event.target).value)" />
-      <button class="btn btn-mustard" type="submit" aria-label="Buscar">Buscar</button>
-    </form>
-
     <nav class="links" aria-label="Principal">
-      <a routerLink="/catalog" routerLinkActive="active">Catálogo</a>
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
+      <a routerLink="/catalog" routerLinkActive="active">Explorar</a>
       @if (auth.user(); as u) {
         <a routerLink="/profile" routerLinkActive="active" class="user">Hola, {{ u.nombre }}</a>
         <button class="btn btn-ghost" (click)="logout()">Salir</button>
@@ -29,17 +18,6 @@
       }
     </nav>
   </div>
-
-  <form class="searchbar mobile" role="search" (submit)="$event.preventDefault(); search()">
-    <label class="sr-only" for="nav-search-m">Buscar materiales</label>
-    <input
-      id="nav-search-m"
-      type="search"
-      placeholder="Buscar materiales…"
-      [value]="query()"
-      (input)="onInput($any($event.target).value)" />
-    <button class="btn btn-mustard" type="submit" aria-label="Buscar">🔍</button>
-  </form>
 </header>
 
 <main id="main">

@@ -1,122 +1,313 @@
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Api } from '../core/api';
-import { Material } from '../core/models';
+import { SearchResult, Options } from '../core/models';
 import { MaterialCard } from '../shared/material-card';
 import { SkeletonCard } from '../shared/skeleton-card';
 
-const TIPOS = ['Libro', 'Ensayo', 'Revista', 'Poema', 'AudioBook'];
 const PAGE = 24;
+
+interface Filters {
+  tipo: string; idioma: string; pais: string;
+  anio_min: number | null; anio_max: number | null; paginas_min: number | null; paginas_max: number | null;
+  editorial: string; editorial_pais: string; fundacion_min: number | null; fundacion_max: number | null;
+  agerate: string; violencia_max: number | null; sexualidad_max: number | null;
+  genero: string; subgenero: string;
+  autor: string; autor_pais: string;
+  con_premio: boolean; premio: string; premio_categoria: string; relevancia_min: number | null;
+  con_ilustraciones: boolean; tipo_arte: string; artista: string; con_curiosidades: boolean;
+  min_likes: number | null; min_lecturas: number | null; min_resenas: number | null;
+  puntaje_min: number | null; puntaje_max: number | null; min_autores: number | null;
+  multi_autor: boolean; con_resenas: boolean;
+  order: string;
+}
+
+function emptyFilters(): Filters {
+  return {
+    tipo: '', idioma: '', pais: '',
+    anio_min: null, anio_max: null, paginas_min: null, paginas_max: null,
+    editorial: '', editorial_pais: '', fundacion_min: null, fundacion_max: null,
+    agerate: '', violencia_max: null, sexualidad_max: null,
+    genero: '', subgenero: '',
+    autor: '', autor_pais: '',
+    con_premio: false, premio: '', premio_categoria: '', relevancia_min: null,
+    con_ilustraciones: false, tipo_arte: '', artista: '', con_curiosidades: false,
+    min_likes: null, min_lecturas: null, min_resenas: null,
+    puntaje_min: null, puntaje_max: null, min_autores: null,
+    multi_autor: false, con_resenas: false,
+    order: 'relevancia',
+  };
+}
 
 @Component({
   selector: 'app-catalog',
-  imports: [MaterialCard, SkeletonCard],
+  imports: [FormsModule, DecimalPipe, MaterialCard, SkeletonCard],
   template: `
     <div class="container">
-      <h1 class="page-title">Catálogo</h1>
-
-      <div class="filters">
-        <div class="chips" role="group" aria-label="Filtrar por género">
-          <button class="chip-outline" [class.active]="!genre()" (click)="setGenre('')">Todos los géneros</button>
-          @for (g of genres(); track g) {
-            <button class="chip-outline" [class.active]="genre() === g" (click)="setGenre(g)">{{ g }}</button>
-          }
+      <header class="page-head">
+        <div>
+          <h1 class="page-title">Búsqueda avanzada</h1>
+          <p class="muted">Filtra el catálogo combinando atributos, relaciones y métricas — cada filtro es una consulta sobre el modelo relacional.</p>
         </div>
-        <div class="chips" role="group" aria-label="Filtrar por tipo">
-          <button class="chip-outline" [class.active]="!type()" (click)="setType('')">Todo tipo</button>
-          @for (t of tipos; track t) {
-            <button class="chip-outline" [class.active]="type() === t" (click)="setType(t)">{{ t }}</button>
-          }
-        </div>
-      </div>
+        <button class="btn btn-ghost toggle" (click)="panel.set(!panel())">
+          {{ panel() ? 'Ocultar filtros' : 'Filtros' }} @if (activeCount()) { <span class="count">{{ activeCount() }}</span> }
+        </button>
+      </header>
 
-      @if (search()) { <p class="muted" role="status">Resultados para “<b>{{ search() }}</b>”</p> }
+      <div class="layout">
+        <aside class="filters" [class.open]="panel()">
+          <fieldset>
+            <legend>Material</legend>
+            <div class="f"><label for="tipo">Tipo</label>
+              <select id="tipo" [(ngModel)]="f.tipo">
+                <option value="">Cualquiera</option>
+                @for (t of opts()?.tipos; track t) { <option [value]="t">{{ t }}</option> }
+              </select></div>
+            <div class="f"><label for="idioma">Idioma</label>
+              <select id="idioma" [(ngModel)]="f.idioma">
+                <option value="">Cualquiera</option>
+                @for (x of opts()?.idiomas; track x) { <option [value]="x">{{ x }}</option> }
+              </select></div>
+            <div class="f"><label for="pais">País del material</label>
+              <select id="pais" [(ngModel)]="f.pais">
+                <option value="">Cualquiera</option>
+                @for (x of opts()?.paises; track x) { <option [value]="x">{{ x }}</option> }
+              </select></div>
+            <div class="pair">
+              <div class="f"><label>Año desde</label><input type="number" [(ngModel)]="f.anio_min" placeholder="1900" /></div>
+              <div class="f"><label>Año hasta</label><input type="number" [(ngModel)]="f.anio_max" placeholder="2024" /></div>
+            </div>
+            <div class="pair">
+              <div class="f"><label>Págs. mín.</label><input type="number" [(ngModel)]="f.paginas_min" /></div>
+              <div class="f"><label>Págs. máx.</label><input type="number" [(ngModel)]="f.paginas_max" /></div>
+            </div>
+          </fieldset>
 
-      @if (loading()) {
-        <div class="grid">@for (i of skeletons; track i) { <app-skeleton-card /> }</div>
-      } @else if (items().length) {
-        <div class="grid stagger">
-          @for (m of items(); track m.id) { <app-material-card [m]="m" /> }
-        </div>
-        @if (canLoadMore()) {
-          <div class="center" style="margin:30px 0">
-            <button class="btn btn-ghost" (click)="loadMore()" [disabled]="loadingMore()">
-              @if (loadingMore()) { <span class="spinner dark"></span> Cargando… } @else { Cargar más }
-            </button>
+          <fieldset>
+            <legend>Editorial</legend>
+            <div class="f"><label>Nombre contiene</label><input [(ngModel)]="f.editorial" placeholder="p. ej. Miller" /></div>
+            <div class="f"><label>País de la editorial</label>
+              <select [(ngModel)]="f.editorial_pais"><option value="">Cualquiera</option>
+                @for (x of opts()?.editorial_paises; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="pair">
+              <div class="f"><label>Fundada desde</label><input type="number" [(ngModel)]="f.fundacion_min" /></div>
+              <div class="f"><label>Fundada hasta</label><input type="number" [(ngModel)]="f.fundacion_max" /></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Clasificación de edad</legend>
+            <div class="f"><label>AgeRate</label>
+              <select [(ngModel)]="f.agerate"><option value="">Cualquiera</option>
+                @for (x of opts()?.agerates; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="pair">
+              <div class="f"><label>Violencia ≤</label><input type="number" min="0" [(ngModel)]="f.violencia_max" /></div>
+              <div class="f"><label>Sexualidad ≤</label><input type="number" min="0" [(ngModel)]="f.sexualidad_max" /></div>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Géneros</legend>
+            <div class="f"><label>Género</label>
+              <select [(ngModel)]="f.genero"><option value="">Cualquiera</option>
+                @for (x of opts()?.generos; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="f"><label>Subgénero</label>
+              <select [(ngModel)]="f.subgenero"><option value="">Cualquiera</option>
+                @for (x of opts()?.subgeneros; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Autores</legend>
+            <div class="f"><label>Nombre/apellido contiene</label><input [(ngModel)]="f.autor" placeholder="p. ej. Garcia" /></div>
+            <div class="f"><label>País del autor</label>
+              <select [(ngModel)]="f.autor_pais"><option value="">Cualquiera</option>
+                @for (x of opts()?.autor_paises; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Premios</legend>
+            <label class="check"><input type="checkbox" [(ngModel)]="f.con_premio" /> Solo premiados</label>
+            <div class="f"><label>Premio</label>
+              <select [(ngModel)]="f.premio"><option value="">Cualquiera</option>
+                @for (x of opts()?.premios; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="f"><label>Categoría del premio</label>
+              <select [(ngModel)]="f.premio_categoria"><option value="">Cualquiera</option>
+                @for (x of opts()?.premio_categorias; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="f"><label>Relevancia mínima</label><input type="number" [(ngModel)]="f.relevancia_min" /></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Ilustraciones y extras</legend>
+            <label class="check"><input type="checkbox" [(ngModel)]="f.con_ilustraciones" /> Con ilustraciones</label>
+            <div class="f"><label>Tipo de arte</label>
+              <select [(ngModel)]="f.tipo_arte"><option value="">Cualquiera</option>
+                @for (x of opts()?.tipos_arte; track x) { <option [value]="x">{{ x }}</option> }</select></div>
+            <div class="f"><label>Artista contiene</label><input [(ngModel)]="f.artista" /></div>
+            <label class="check"><input type="checkbox" [(ngModel)]="f.con_curiosidades" /> Con curiosidades</label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Métricas de interacción</legend>
+            <div class="pair">
+              <div class="f"><label>Mín. likes</label><input type="number" [(ngModel)]="f.min_likes" /></div>
+              <div class="f"><label>Mín. lecturas</label><input type="number" [(ngModel)]="f.min_lecturas" /></div>
+            </div>
+            <div class="f"><label>Mín. reseñas</label><input type="number" [(ngModel)]="f.min_resenas" /></div>
+            <div class="pair">
+              <div class="f"><label>Puntaje ≥</label><input type="number" step="0.1" min="0" max="10" [(ngModel)]="f.puntaje_min" /></div>
+              <div class="f"><label>Puntaje ≤</label><input type="number" step="0.1" min="0" max="10" [(ngModel)]="f.puntaje_max" /></div>
+            </div>
+            <div class="f"><label>Mín. de autores</label><input type="number" [(ngModel)]="f.min_autores" /></div>
+            <label class="check"><input type="checkbox" [(ngModel)]="f.multi_autor" /> Más de un autor</label>
+            <label class="check"><input type="checkbox" [(ngModel)]="f.con_resenas" /> Con al menos una reseña</label>
+          </fieldset>
+
+          <div class="panel-actions">
+            <button class="btn btn-mustard full" (click)="apply()">Buscar</button>
+            <button class="btn btn-ghost full" (click)="clear()">Limpiar filtros</button>
           </div>
-        }
-      } @else {
-        <div class="empty">
-          <span class="emoji">📚</span>
-          <h3>Sin resultados</h3>
-          <p class="muted">Prueba con otro filtro o término de búsqueda.</p>
-        </div>
-      }
+        </aside>
+
+        <section class="results">
+          <div class="results-head">
+            <span class="muted" role="status">
+              @if (loading()) { Buscando… } @else { {{ items().length }} resultado(s){{ canLoadMore() ? '+' : '' }} }
+            </span>
+            <div class="f inline"><label for="order">Ordenar por</label>
+              <select id="order" [(ngModel)]="f.order" (change)="apply()">
+                <option value="relevancia">Relevancia</option>
+                <option value="populares">Más populares</option>
+                <option value="likes">Más likes</option>
+                <option value="lecturas">Más leídos</option>
+                <option value="resenas">Más reseñados</option>
+                <option value="puntaje">Mejor puntaje</option>
+                <option value="anio_desc">Más recientes</option>
+                <option value="anio_asc">Más antiguos</option>
+                <option value="paginas_desc">Más páginas</option>
+                <option value="paginas_asc">Menos páginas</option>
+              </select>
+            </div>
+          </div>
+
+          @if (loading()) {
+            <div class="grid">@for (i of sk; track i) { <app-skeleton-card /> }</div>
+          } @else if (items().length) {
+            <div class="grid stagger">
+              @for (r of items(); track r.id) {
+                <div class="result">
+                  <app-material-card [m]="r" />
+                  <div class="badges">
+                    <span title="likes">♥ {{ r.total_likes }}</span>
+                    <span title="lecturas">👁 {{ r.total_lecturas }}</span>
+                    @if (r.promedio_puntaje !== null) { <span title="puntaje">★ {{ r.promedio_puntaje | number:'1.1-1' }}</span> }
+                    <span title="autores">✍ {{ r.num_autores }}</span>
+                  </div>
+                </div>
+              }
+            </div>
+            @if (canLoadMore()) {
+              <div class="center" style="margin:30px 0">
+                <button class="btn btn-ghost" (click)="loadMore()" [disabled]="loadingMore()">
+                  @if (loadingMore()) { <span class="spinner dark"></span> Cargando… } @else { Cargar más }
+                </button>
+              </div>
+            }
+          } @else {
+            <div class="empty"><span class="emoji">🔍</span><h3>Sin resultados</h3>
+              <p class="muted">Ningún material cumple esa combinación de filtros. Prueba relajar alguno.</p></div>
+          }
+        </section>
+      </div>
     </div>
   `,
   styles: [`
-    .page-title { font-size: clamp(1.6rem, 4vw, 2rem); margin: 32px 0 18px; }
-    .filters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
-    .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-    .chip-outline {
-      padding: 6px 14px; border-radius: 999px; background: transparent;
-      border: 1.5px solid var(--line); color: var(--muted); cursor: pointer;
-      font-size: .82rem; font-weight: 600; transition: all var(--t-fast);
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin: 28px 0 18px; }
+    .page-title { font-size: clamp(1.6rem, 4vw, 2rem); margin: 0 0 4px; }
+    .toggle { display: none; } .toggle .count { background: var(--mustard); color: #fff; border-radius: 999px; padding: 1px 8px; font-size: .78rem; }
+    .layout { display: grid; grid-template-columns: 290px 1fr; gap: 28px; align-items: start; }
+    .filters {
+      position: sticky; top: 84px; display: flex; flex-direction: column; gap: 14px;
+      max-height: calc(100vh - 104px); overflow-y: auto; padding-right: 6px;
     }
-    .chip-outline:hover { border-color: var(--mustard); color: var(--mustard-deep); }
-    .chip-outline.active { background: var(--mustard); color: #fff; border-color: var(--mustard); }
-    .stagger > *:nth-child(1){animation-delay:.02s} .stagger > *:nth-child(2){animation-delay:.04s}
-    .stagger > *:nth-child(3){animation-delay:.06s} .stagger > *:nth-child(4){animation-delay:.08s}
-    .stagger > *:nth-child(5){animation-delay:.1s} .stagger > *:nth-child(6){animation-delay:.12s}
-    .empty { text-align: center; padding: 70px 20px; }
-    .empty .emoji { font-size: 3rem; }
-    .empty h3 { margin: 12px 0 4px; }
+    fieldset { border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; background: var(--surface); }
+    legend { font-weight: 700; font-size: .9rem; color: var(--mustard-deep); padding: 0 6px; }
+    .f { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+    .f.inline { flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+    .f label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+    .f input, .f select { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); font-size: .88rem; color: var(--ink); font-family: inherit; }
+    .f input:focus, .f select:focus { outline: none; border-color: var(--mustard); box-shadow: 0 0 0 3px var(--mustard-soft); }
+    .f.inline select { width: auto; }
+    .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .check { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin: 8px 0; cursor: pointer; }
+    .check input { width: 18px; height: 18px; accent-color: var(--mustard); }
+    .panel-actions { display: flex; flex-direction: column; gap: 8px; position: sticky; bottom: 0; background: var(--bg); padding-top: 8px; }
+    .full { width: 100%; justify-content: center; }
+    .results-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .result { display: flex; flex-direction: column; }
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; font-size: .76rem; color: var(--muted); }
+    .badges span { background: var(--surface-alt); padding: 2px 8px; border-radius: 999px; }
+    .empty { text-align: center; padding: 70px 20px; } .empty .emoji { font-size: 3rem; } .empty h3 { margin: 12px 0 4px; }
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .toggle { display: inline-flex; }
+      .filters { position: static; max-height: none; display: none; }
+      .filters.open { display: flex; }
+    }
   `],
 })
 export class Catalog {
   private api = inject(Api);
   private route = inject(ActivatedRoute);
-  tipos = TIPOS;
-  skeletons = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-  genres = signal<string[]>([]);
-  items = signal<Material[]>([]);
-  search = signal('');
-  genre = signal('');
-  type = signal('');
+  sk = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  opts = signal<Options | null>(null);
+  items = signal<SearchResult[]>([]);
   loading = signal(true);
   loadingMore = signal(false);
   canLoadMore = signal(false);
+  panel = signal(false);
+  f: Filters = emptyFilters();
+
+  activeCount(): number {
+    const cur = this.f as unknown as Record<string, unknown>;
+    return Object.keys(cur).filter((k) => k !== 'order' && cur[k] !== '' && cur[k] !== null && cur[k] !== false).length;
+  }
 
   constructor() {
-    this.api.genres().subscribe((g) => this.genres.set(g));
+    this.api.options().subscribe((o) => this.opts.set(o));
+    // permite llegar con ?genre=Ficcion desde la home
     this.route.queryParams.subscribe((p) => {
-      this.search.set(p['search'] ?? '');
-      this.genre.set(p['genre'] ?? '');
-      this.reload();
+      if (p['genre']) this.f['genero'] = p['genre'];
+      this.apply();
     });
   }
 
-  private reload(): void {
+  private params(offset: number) {
+    return { ...this.f, limit: PAGE, offset };
+  }
+
+  apply(): void {
     this.loading.set(true);
-    this.items.set([]);
-    this.api.materials({ search: this.search(), genre: this.genre(), type: this.type(), limit: PAGE, offset: 0 })
-      .subscribe((res) => {
-        this.items.set(res);
-        this.canLoadMore.set(res.length === PAGE);
-        this.loading.set(false);
-      });
+    this.panel.set(false);
+    this.api.search(this.params(0)).subscribe((res) => {
+      this.items.set(res);
+      this.canLoadMore.set(res.length === PAGE);
+      this.loading.set(false);
+    });
   }
 
   loadMore(): void {
     this.loadingMore.set(true);
-    this.api.materials({ search: this.search(), genre: this.genre(), type: this.type(), limit: PAGE, offset: this.items().length })
-      .subscribe((res) => {
-        this.items.update((cur) => [...cur, ...res]);
-        this.canLoadMore.set(res.length === PAGE);
-        this.loadingMore.set(false);
-      });
+    this.api.search(this.params(this.items().length)).subscribe((res) => {
+      this.items.update((cur) => [...cur, ...res]);
+      this.canLoadMore.set(res.length === PAGE);
+      this.loadingMore.set(false);
+    });
   }
 
-  setGenre(g: string): void { this.genre.set(g); this.reload(); }
-  setType(t: string): void { this.type.set(t); this.reload(); }
+  clear(): void {
+    this.f = emptyFilters();
+    this.apply();
+  }
 }

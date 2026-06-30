@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Material, MaterialDetalle, Popular, Resena, Usuario, HistorialItem } from './models';
+import { Material, MaterialDetalle, Popular, Resena, Usuario, HistorialItem, SearchResult, Options } from './models';
 
 // API desplegada en el servidor (puerto 7000). Para desarrollo local cambia a
 // 'http://localhost:7000/api'.
@@ -29,6 +29,19 @@ export class Api {
       if (v !== undefined && v !== '' && v !== null) p = p.set(k, String(v));
     }
     return this.http.get<Material[]>(`${API}/materials`, { params: p });
+  }
+
+  options(): Observable<Options> {
+    return this.http.get<Options>(`${API}/options`);
+  }
+
+  search(params: Record<string, any>): Observable<SearchResult[]> {
+    let p = new HttpParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v === undefined || v === null || v === '' || v === false) continue;
+      p = p.set(k, String(v === true ? 1 : v));
+    }
+    return this.http.get<SearchResult[]>(`${API}/search`, { params: p });
   }
 
   material(id: number): Observable<MaterialDetalle> {

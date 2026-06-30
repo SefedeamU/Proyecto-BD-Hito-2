@@ -37,6 +37,17 @@ Endpoints principales: `GET /api/materials`, `/api/materials/{id}`,
 `/api/materials/{id}/reviews`, `/api/popular`, `/api/genres`, `/api/stats`,
 `POST /api/login`, `/api/register`, `/api/materials/{id}/like`, `/api/users/{u}/history`.
 
+**Búsqueda avanzada** — `GET /api/search` acepta ~30 parámetros que se traducen
+en una consulta con múltiples JOINs, subconsultas `EXISTS` y filtros sobre
+agregados: por atributos de Material (tipo, idioma, país, rango de año/páginas),
+editorial (nombre, país, año de fundación), clasificación de edad (AgeRate,
+niveles de violencia/sexualidad), género y subgénero, autor (nombre, país),
+premios (con premio, premio, categoría, relevancia), ilustraciones (con
+ilustraciones, tipo de arte, artista), curiosidades, y métricas
+(`min_likes`, `min_lecturas`, `min_resenas`, `puntaje_min/max`, `min_autores`,
+`multi_autor`, `con_resenas`), con `order` y paginación. `GET /api/options`
+devuelve las listas para poblar los desplegables del frontend.
+
 ## 2. Frontend (Angular, puerto 4200)
 
 ```bash

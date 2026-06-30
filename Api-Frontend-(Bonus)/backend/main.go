@@ -83,6 +83,8 @@ func (a *App) routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/health", a.health)
 	mux.HandleFunc("GET /api/stats", a.stats)
 	mux.HandleFunc("GET /api/genres", a.genres)
+	mux.HandleFunc("GET /api/options", a.options)
+	mux.HandleFunc("GET /api/search", a.search)
 	mux.HandleFunc("GET /api/popular", a.popular)
 	mux.HandleFunc("GET /api/materials", a.listMaterials)
 	mux.HandleFunc("GET /api/materials/{id}", a.getMaterial)
