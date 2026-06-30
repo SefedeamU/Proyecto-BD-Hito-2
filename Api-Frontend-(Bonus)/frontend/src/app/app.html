@@ -7,6 +7,16 @@
       <span class="logo-text">Biblioteca <b>de Alejandría</b></span>
     </a>
 
+    <div class="db-select" title="Base de datos sobre la que se hacen TODAS las consultas">
+      <span class="db-ico" aria-hidden="true">🗄️</span>
+      <label class="sr-only" for="db">Base de datos</label>
+      <select id="db" [value]="dbcfg.db()" (change)="onDbChange($any($event.target).value)">
+        @for (d of dbcfg.databases; track d.value) {
+          <option [value]="d.value">{{ d.label }} · {{ d.hint }}</option>
+        }
+      </select>
+    </div>
+
     <nav class="links" aria-label="Principal">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
       <a routerLink="/catalog" routerLinkActive="active">Explorar</a>

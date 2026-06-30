@@ -8,9 +8,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Store envuelve el pool y concentra todas las consultas SQL al modelo
-// relacional. Cada método mapea 1:1 con un endpoint de la API.
-type Store struct{ pool *pgxpool.Pool }
+// Store envuelve el pool de UNA base y concentra todas las consultas SQL al
+// modelo relacional. Cada método mapea 1:1 con un endpoint de la API. El
+// campo name indica a qué base está ligado este Store (para reportarlo).
+type Store struct {
+	pool *pgxpool.Pool
+	name string
+}
 
 func emptyIfNil(s []string) []string {
 	if s == nil {

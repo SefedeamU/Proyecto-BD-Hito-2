@@ -29,6 +29,18 @@
 .searchbar input:focus { outline: none; border-color: var(--mustard); box-shadow: 0 0 0 3px var(--mustard-soft); }
 .searchbar.mobile { display: none; }
 
+.db-select {
+  display: flex; align-items: center; gap: 6px; margin-left: auto;
+  background: var(--mustard-soft); border: 1.5px solid var(--mustard); border-radius: 999px;
+  padding: 4px 10px 4px 12px;
+}
+.db-ico { font-size: .95rem; }
+.db-select select {
+  border: none; background: transparent; color: var(--mustard-deep); font-weight: 700;
+  font-size: .85rem; cursor: pointer; min-height: 32px; font-family: inherit;
+}
+.db-select select:focus { outline: none; }
+
 .links { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
 .links > a { font-weight: 600; font-size: 0.92rem; color: var(--ink); position: relative; }
 .links > a:hover { color: var(--mustard-deep); }

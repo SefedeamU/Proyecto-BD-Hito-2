@@ -79,7 +79,7 @@ func (a *App) search(w http.ResponseWriter, r *http.Request) {
 		MinAutores: qIntPtr(r, "min_autores"), MultiAutor: qBool(r, "multi_autor"), ConResenas: qBool(r, "con_resenas"),
 		Order: qStr(r, "order"), Limit: limit, Offset: qInt(r, "offset", 0),
 	}
-	res, err := a.store.Search(r.Context(), p)
+	res, err := storeOf(r).Search(r.Context(), p)
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -88,7 +88,7 @@ func (a *App) search(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) options(w http.ResponseWriter, r *http.Request) {
-	o, err := a.store.Options(r.Context())
+	o, err := storeOf(r).Options(r.Context())
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -97,11 +97,21 @@ func (a *App) options(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, 200, map[string]any{"status": "ok", "db": env("PGDATABASE", "bd_literaria_10k")})
+	writeJSON(w, 200, map[string]any{"status": "ok", "db": storeOf(r).name})
+}
+
+// databases: lista las bases disponibles y cuál es la default (para el selector
+// global del frontend).
+func (a *App) databases(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, 200, map[string]any{
+		"databases": a.db.Names(),
+		"default":   a.db.Default(),
+		"current":   storeOf(r).name,
+	})
 }
 
 func (a *App) stats(w http.ResponseWriter, r *http.Request) {
-	s, err := a.store.Stats(r.Context())
+	s, err := storeOf(r).Stats(r.Context())
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -110,7 +120,7 @@ func (a *App) stats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) genres(w http.ResponseWriter, r *http.Request) {
-	g, err := a.store.Genres(r.Context())
+	g, err := storeOf(r).Genres(r.Context())
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -123,7 +133,7 @@ func (a *App) popular(w http.ResponseWriter, r *http.Request) {
 	if limit > 50 {
 		limit = 50
 	}
-	p, err := a.store.Popular(r.Context(), limit)
+	p, err := storeOf(r).Popular(r.Context(), limit)
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -138,7 +148,7 @@ func (a *App) listMaterials(w http.ResponseWriter, r *http.Request) {
 		limit = 60
 	}
 	offset := qInt(r, "offset", 0)
-	m, err := a.store.ListMaterials(r.Context(),
+	m, err := storeOf(r).ListMaterials(r.Context(),
 		strings.TrimSpace(q.Get("search")), q.Get("type"), q.Get("genre"), limit, offset)
 	if err != nil {
 		fail(w, 500, err.Error())
@@ -153,7 +163,7 @@ func (a *App) getMaterial(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "id inválido")
 		return
 	}
-	d, err := a.store.GetMaterial(r.Context(), id)
+	d, err := storeOf(r).GetMaterial(r.Context(), id)
 	if err != nil {
 		fail(w, 404, "material no encontrado")
 		return
@@ -167,7 +177,7 @@ func (a *App) getReviews(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "id inválido")
 		return
 	}
-	rs, err := a.store.GetReviews(r.Context(), id)
+	rs, err := storeOf(r).GetReviews(r.Context(), id)
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -181,7 +191,7 @@ func (a *App) login(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "JSON inválido")
 		return
 	}
-	u, err := a.store.Login(r.Context(), body.Username, body.Password)
+	u, err := storeOf(r).Login(r.Context(), body.Username, body.Password)
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -215,7 +225,7 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 		b.Telefono = 900000000
 	}
 	u := Usuario{Username: b.Username, Email: b.Email, Nombre: b.Nombre, Apellido: b.Apellido, Rol: "Registrado"}
-	if err := a.store.Register(r.Context(), u, b.Password, b.Edad, b.Ciudad, b.Telefono); err != nil {
+	if err := storeOf(r).Register(r.Context(), u, b.Password, b.Edad, b.Ciudad, b.Telefono); err != nil {
 		fail(w, 409, "no se pudo registrar (¿usuario o email ya existe?): "+err.Error())
 		return
 	}
@@ -223,7 +233,7 @@ func (a *App) register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) history(w http.ResponseWriter, r *http.Request) {
-	h, err := a.store.History(r.Context(), r.PathValue("username"))
+	h, err := storeOf(r).History(r.Context(), r.PathValue("username"))
 	if err != nil {
 		fail(w, 500, err.Error())
 		return
@@ -242,7 +252,7 @@ func (a *App) likeMaterial(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "se requiere username y email")
 		return
 	}
-	if err := a.store.Like(r.Context(), id, b.Username, b.Email); err != nil {
+	if err := storeOf(r).Like(r.Context(), id, b.Username, b.Email); err != nil {
 		fail(w, 409, "no se pudo dar like: "+err.Error())
 		return
 	}
@@ -267,7 +277,7 @@ func (a *App) createReview(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, "el puntaje debe estar entre 0 y 10")
 		return
 	}
-	if err := a.store.CreateReview(r.Context(), id, b.Username, b.Email, b.Comentario, b.Puntaje); err != nil {
+	if err := storeOf(r).CreateReview(r.Context(), id, b.Username, b.Email, b.Comentario, b.Puntaje); err != nil {
 		fail(w, 409, "no se pudo crear la reseña (¿ya reseñaste este material?): "+err.Error())
 		return
 	}
