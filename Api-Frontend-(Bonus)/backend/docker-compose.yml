@@ -1,0 +1,17 @@
+# API de la Biblioteca Literaria. La base de datos NO va en este compose:
+# es el PostgreSQL remoto (AWS) que se configura por variables de entorno.
+# La API se expone en el puerto 7000.
+services:
+  api:
+    build: .
+    container_name: biblioteca-api
+    ports:
+      - "7000:7000"
+    env_file:
+      - .env
+    environment:
+      API_PORT: "7000"
+      PGPORT: "${PGPORT:-5432}"
+      PGDATABASE: "${PGDATABASE:-bd_literaria_10k}"
+      PGSSLMODE: "${PGSSLMODE:-prefer}"
+    restart: unless-stopped

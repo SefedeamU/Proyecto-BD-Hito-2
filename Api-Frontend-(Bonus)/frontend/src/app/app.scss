@@ -1,0 +1,32 @@
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  background: rgba(250, 246, 238, 0.92); backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+.nav-in { display: flex; align-items: center; gap: 22px; height: 68px; }
+
+.logo { display: flex; align-items: center; gap: 9px; }
+.logo-mark { color: var(--mustard); font-size: 1.6rem; }
+.logo-text { font-family: 'Georgia', serif; font-size: 1.2rem; color: var(--ink); }
+.logo-text b { color: var(--mustard-deep); font-weight: 700; }
+
+.searchbar { display: flex; gap: 8px; flex: 1; max-width: 520px; }
+.searchbar input {
+  flex: 1; padding: 10px 16px; border: 1.5px solid var(--line);
+  border-radius: 999px; background: var(--surface); font-size: 0.92rem; color: var(--ink);
+}
+.searchbar input:focus { outline: none; border-color: var(--mustard); }
+
+.links { display: flex; align-items: center; gap: 16px; }
+.links > a { font-weight: 600; font-size: 0.92rem; color: var(--ink); }
+.links > a:hover { color: var(--mustard-deep); }
+.links .user { color: var(--mustard-deep); }
+
+.foot {
+  margin-top: 60px; padding: 28px 0; border-top: 1px solid var(--line);
+  color: var(--muted); font-size: 0.85rem; text-align: center;
+}
+
+@media (max-width: 760px) {
+  .searchbar { display: none; }
+}

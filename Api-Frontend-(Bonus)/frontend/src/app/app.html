@@ -1,0 +1,36 @@
+<header class="nav">
+  <div class="container nav-in">
+    <a class="logo" routerLink="/">
+      <span class="logo-mark">❦</span><span class="logo-text">Biblioteca<b>Literaria</b></span>
+    </a>
+
+    <div class="searchbar">
+      <input
+        type="search"
+        placeholder="Buscar materiales, alias…"
+        (input)="onInput($any($event.target).value)"
+        (keyup.enter)="search()" />
+      <button class="btn btn-mustard" (click)="search()">Buscar</button>
+    </div>
+
+    <nav class="links">
+      <a routerLink="/catalog">Catálogo</a>
+      @if (auth.user(); as u) {
+        <a routerLink="/profile" class="user">Hola, {{ u.nombre }}</a>
+        <button class="btn btn-ghost" (click)="logout()">Salir</button>
+      } @else {
+        <a routerLink="/login" class="btn btn-ghost">Ingresar</a>
+      }
+    </nav>
+  </div>
+</header>
+
+<main>
+  <router-outlet />
+</main>
+
+<footer class="foot">
+  <div class="container">
+    Biblioteca Literaria · Proyecto Base de Datos I — Hito 2 · datos servidos desde PostgreSQL
+  </div>
+</footer>
