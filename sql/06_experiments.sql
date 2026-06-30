@@ -88,8 +88,8 @@ FROM Usuario u
 JOIN Leer le    ON le.Usuario_Username = u.Username
                AND le.Usuario_Email    = u.Email
 JOIN Material m ON m.Id = le.Material_Id
-WHERE u.Username = 'usuario1'              -- :username
-  AND u.Email    = 'usuario1@mail.com'     -- :email
+WHERE u.Username = 'user1'              -- :username
+  AND u.Email    = 'user1@mail.com'     -- :email
 ORDER BY le.Fecha DESC;
 
 

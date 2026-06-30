@@ -14,6 +14,25 @@ from . import config
 # acelerar; los datos se generan válidos por construcción).
 TRIGGER_TABLES = ["material", "resena", "genero"]
 
+# [Cambio M] Portadas: cada material recibe un arreglo de 3 URLs de imagen
+# (Lorem Picsum, servicio público sin API key, deterministas por seed -> el
+# dump es reproducible). Las URLs se derivan del id en el servidor, sin
+# transferir datos; ON CONFLICT hace la inserción idempotente.
+INSERT_IMAGES_SQL = """
+INSERT INTO imagenmaterial (material_id, urls)
+SELECT id, ARRAY[
+    'https://picsum.photos/seed/litmat' || id || '-1/400/600',
+    'https://picsum.photos/seed/litmat' || id || '-2/400/600',
+    'https://picsum.photos/seed/litmat' || id || '-3/400/600'
+] FROM material
+ON CONFLICT (material_id) DO NOTHING
+"""
+
+
+def image_urls(mid):
+    """Las 3 URLs de portada de un material (mismas que genera INSERT_IMAGES_SQL)."""
+    return [f"https://picsum.photos/seed/litmat{mid}-{k}/400/600" for k in (1, 2, 3)]
+
 
 def ensure_database(dbname):
     """Crea la base si no existe (conectando a la base 'postgres')."""

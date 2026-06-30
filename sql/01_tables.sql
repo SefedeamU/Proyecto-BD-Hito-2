@@ -223,6 +223,25 @@ CREATE TABLE AudioBook (
 
 
 -- ---------------------------------------------------------------------
+-- 12b. ImagenMaterial  (portadas de cada material)  [Cambio M]
+--     Cada material tiene un arreglo de 3 URLs de imagen (portadas) para
+--     que el front-end pueda mostrarlas y variarlas. Las URLs apuntan a
+--     Lorem Picsum (servicio público, sin API key, deterministas por seed),
+--     de modo que el dump es reproducible. Se modela como tabla 1:1 con un
+--     arreglo TEXT[] de 3 elementos (en vez de 3 filas) para no inflar los
+--     volúmenes (1M filas en vez de 3M) y mantener la carga/dump livianos.
+-- ---------------------------------------------------------------------
+CREATE TABLE ImagenMaterial (
+    Material_Id BIGINT NOT NULL,
+    URLs        TEXT[] NOT NULL,
+    CONSTRAINT pk_imagenmaterial PRIMARY KEY (Material_Id),
+    CONSTRAINT fk_imagenmaterial_material FOREIGN KEY (Material_Id)
+        REFERENCES Material (Id) ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT ck_imagenmaterial_urls CHECK (array_length(URLs, 1) = 3)
+);
+
+
+-- ---------------------------------------------------------------------
 -- 13. Escribe  (M:N  Autor - Material)
 --     Participación total "material >= 1 autor" enforzada por trigger
 --     diferido (ver 02_triggers.sql, [Cambio B]).

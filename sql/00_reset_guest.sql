@@ -16,10 +16,12 @@
 DROP VIEW IF EXISTS vista_material_basico     CASCADE;
 DROP VIEW IF EXISTS vista_material_autores    CASCADE;
 DROP VIEW IF EXISTS vista_material_subgenero  CASCADE;
+DROP VIEW IF EXISTS vista_material_portadas   CASCADE;
 DROP VIEW IF EXISTS vista_popularidad_material CASCADE;
 DROP VIEW IF EXISTS vista_historial_usuario   CASCADE;
 
 -- Tablas (01_tables). CASCADE elimina FKs y triggers asociados.
+DROP TABLE IF EXISTS imagenmaterial     CASCADE;
 DROP TABLE IF EXISTS resena             CASCADE;
 DROP TABLE IF EXISTS leer               CASCADE;
 DROP TABLE IF EXISTS likes              CASCADE;

@@ -42,6 +42,10 @@ def _populate(cur, fac):
     for tipo in TIPOS:
         copy(SUBTYPE_TABLES[tipo], ["material_id"], ((mid,) for mid in fac.buckets[tipo]))
 
+    # --- portadas (3 URLs por material, derivadas del id) [Cambio M] ---
+    cur.execute(db.INSERT_IMAGES_SQL)
+    counts["imagenmaterial"] = cur.rowcount
+
     # --- relaciones materializadas ---
     copy("escribe", ["material_id", "autor_id"], fac.escribe)
     copy("pertenece", ["material_id", "genero_nombre"], fac.pertenece)

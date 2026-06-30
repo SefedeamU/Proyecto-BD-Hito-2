@@ -281,7 +281,7 @@ todas las tablas. Los cuatro escenarios se entregan como dumps restaurables en
 \subsection{Ajustes al modelo del Hito 1}
 \label{sec:cambios}
 
-Al escribir el código se identificaron once puntos donde el modelo relacional
+Al escribir el código se identificaron trece puntos donde el modelo relacional
 dejaba reglas del dominio sin mecanismo de cumplimiento, o donde había
 decisiones de diseño que convenía precisar antes de poblar las bases. Todos
 los cambios están marcados como comentarios \texttt{[Cambio X]} en los scripts
@@ -319,6 +319,12 @@ J & Experimento & La consulta de materiales populares se reescribió para evitar
     un producto cartesiano que distorsionaba los tiempos. \\
 K & Experimento & Se quitaron los índices redundantes con la primera columna de
     alguna PK (no aportan mejora y ensucian el experimento). \\
+L & Experimento & Nueva Consulta~5 que filtra por \emph{rango} de años
+    (\texttt{BETWEEN}), para demostrar un índice B-tree sobre un predicado de
+    rango (a pedido del profesor). \\
+M & Modelo & Nueva tabla \texttt{ImagenMaterial}: cada material recibe un
+    arreglo de tres URLs de portada (Lorem Picsum) para la aplicación de
+    demostración. Los datos de imagen viven en la base, no en el front-end. \\
 \bottomrule
 \end{longtable}
 \end{center}
@@ -603,7 +609,7 @@ en la base de 1M como referencia principal.]}
   \item Se implementó en PostgreSQL el modelo relacional del Hito 1: 25 tablas
   con restricciones de integridad (PK, FK, UNIQUE, NOT NULL, CHECK), cuatro
   triggers para reglas multi-tabla (dos de ellos diferidos) y cinco vistas de
-  usuario. Los once ajustes al modelo se documentaron de forma transparente.
+  usuario. Los trece ajustes al modelo se documentaron de forma transparente.
 
   \item Se generaron cuatro escenarios de volumen reproducibles, hasta
   aproximadamente 3.86 millones de filas en el escenario de 1M, mediante un

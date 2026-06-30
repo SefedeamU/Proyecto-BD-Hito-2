@@ -76,6 +76,7 @@ Resumen:
 | J | Reescritura de la Consulta 3 | eliminar producto cartesiano del benchmark |
 | K | Quitar índices redundantes con la PK | evitar índices que dan 0% de mejora |
 | L | Nueva Consulta 5 por **rango** de años (`BETWEEN`) | requisito del profesor: demostrar índice B-tree en predicados de rango |
+| M | Tabla `ImagenMaterial` (3 URLs de portada por material) | la demo necesita imágenes; los datos viven en la BD, no en el front-end |
 
 Decisiones de **NO cambiar** (fidelidad al Hito 1): PK compuesta de `Usuario`,
 tablas de subtipo, validación temporal solo del lado "hijo". Nota: cualquier

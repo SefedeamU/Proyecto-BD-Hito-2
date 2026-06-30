@@ -103,3 +103,18 @@ FROM Usuario u
 JOIN Leer     le ON le.Usuario_Username = u.Username
                 AND le.Usuario_Email    = u.Email
 JOIN Material m  ON m.Id = le.Material_Id;
+
+
+-- ---------------------------------------------------------------------
+-- vista_material_portadas  [Cambio M]
+-- Material con su arreglo de portadas (URLs de imagen). Conveniente para
+-- que la API/front-end traiga el material y sus imágenes en un solo lugar.
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW vista_material_portadas AS
+SELECT
+    m.Id              AS material_id,
+    m.Alias           AS alias,
+    m.Tipo            AS tipo,
+    im.URLs           AS portadas
+FROM Material m
+LEFT JOIN ImagenMaterial im ON im.Material_Id = m.Id;

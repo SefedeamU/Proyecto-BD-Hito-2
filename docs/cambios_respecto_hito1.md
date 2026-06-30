@@ -92,6 +92,16 @@ El espíritu de las correcciones fue **doble**: (1) cerrar reglas de negocio del
 
 **Por qué:** requisito explícito del profesor: al menos una consulta debe filtrar por **rango**, para mostrar la ventaja de un índice B-tree resolviendo un predicado `BETWEEN` (recorre un tramo contiguo de las hojas del árbol). Se apoya en el índice `idx_material_anio`. Con un rango selectivo (primeros años, escasos) el planner usa `Bitmap Index Scan` y gana de forma clara; con un rango amplio vuelve a `Seq Scan` a propósito (crossover por selectividad), lo cual también es un resultado a reportar.
 
+### [Cambio M] Portadas por material (tabla `ImagenMaterial`)
+**Qué:** se agregó la tabla `ImagenMaterial(Material_Id, URLs)` —una fila por material con un arreglo `TEXT[]` de **3 URLs de imagen**— más la vista `vista_material_portadas`. Cada material queda con tres portadas. Las URLs apuntan a **Lorem Picsum** (`https://picsum.photos/seed/litmat<id>-<n>/400/600`).
+
+**Por qué:** la aplicación de demostración (catálogo, búsqueda, reseñas) necesita mostrar imágenes de cada material, pero el modelo del Hito 1 no contemplaba portadas. Se decidió **almacenar las URLs en la base de datos** (no inyectarlas desde el front-end), porque en un curso de bases de datos los datos deben provenir de la BD; resolverlo en el front sería una solución débil y podría interpretarse como que los datos no están realmente modelados.
+
+**Detalles de diseño:**
+- Se eligió **Lorem Picsum** por ser un servicio público, sin API key, **determinista por seed** (la misma URL siempre devuelve la misma imagen), de modo que los dumps son reproducibles. Las URLs se generan a partir del `id` del material, sin transferir datos (`INSERT ... SELECT` en el servidor).
+- Se modela como **una fila por material con un arreglo de 3 URLs** (en lugar de 3 filas) para no triplicar el volumen (1M filas en vez de 3M) y mantener livianas la carga y los dumps. Es un uso deliberado de arrays de PostgreSQL; la alternativa totalmente normalizada (tabla `(Material_Id, Orden, URL)`) era válida pero pesaba 3× sin aportar al objetivo de la demo.
+- La poblamiento valida que una **muestra de las URLs responda HTTP 200 con reintentos** antes de insertar (script `faker/add_images.py`), y el faker también las genera en corridas frescas (`loader.py`), para mantener todo coherente.
+
 ---
 
 ## 3. Decisiones deliberadas de NO cambiar (fidelidad al Hito 1)
