@@ -76,10 +76,10 @@ Cerramos reglas que el modelo relacional dejaba sin enforcement, sin reinterpret
   \item \textbf{[A]} Discriminador \texttt{Tipo}; \textbf{[B][C]} triggers de participación total.
   \item \textbf{[D]} \texttt{Fecha} en PK de \texttt{Leer} (permite relecturas).
   \item \textbf{[I]} Nueva tabla \texttt{PerteneceSubGenero} (consulta "por subgénero" que el Hito 1 pedía pero el modelo dejaba imposible).
-  \item \textbf{[J]} Reescritura de Q3 para evitar un producto cartesiano.
-  \item \textbf{[K]} Quitamos índices redundantes con la PK.
+  \item \textbf{[J]} La consulta de popularidad agrega cada tabla en subconsultas independientes para no multiplicar filas.
+  \item \textbf{[K]} Los índices se ubican sobre columnas que no lideran ninguna PK (las que dan contraste real).
 \end{itemize}
-\centering (11 cambios documentados en \texttt{docs/cambios\_respecto\_hito1.md})
+\centering (12 cambios documentados en \texttt{docs/cambios\_respecto\_hito1.md})
 \end{frame}
 
 \begin{frame}{Datos: 4 escenarios reproducibles}
@@ -99,17 +99,16 @@ Generador propio (Python + Faker), carga por \texttt{COPY}, semilla fija.
 \end{frame}
 
 \section{Experimentación}
-\begin{frame}{Las 5 consultas y la metodología}
+\begin{frame}{Las 4 consultas y la metodología}
 \footnotesize
 \begin{tabular}{lll}
 \toprule
 \textbf{ID} & \textbf{Qué responde} & \textbf{Patrón} \\
 \midrule
-Q1 & Materiales de un autor & igualdad selectiva \\
-Q2 & Materiales de un género & igualdad poco selectiva \\
-Q3 & Materiales más populares & agregación total \\
-Q4 & Historial de un usuario & igualdad + orden \\
-Q5 & Materiales en un \textbf{rango} de años & \textbf{rango (BETWEEN)} \\
+Q1 & Materiales de un género por clasificación de edad & igualdad + \textbf{rango (BETWEEN)} \\
+Q2 & 20 materiales más populares & agregación total \\
+Q3 & Historial de lectura de un usuario & igualdad selectiva + orden \\
+Q4 & Usuarios con reseñas destacadas por rango de años & \textbf{rango (BETWEEN)} + \texttt{DISTINCT} \\
 \bottomrule
 \end{tabular}
 \vspace{0.3cm}
@@ -125,58 +124,58 @@ Q5 & Materiales en un \textbf{rango} de años & \textbf{rango (BETWEEN)} \\
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
-\begin{tabular}{lrr}
+Tiempos en ms (mediana):
+\begin{tabular}{lrrr}
 \toprule
-& \textbf{Sin} & \textbf{Con} \\
+& \textbf{Sin} & \textbf{Con} & \textbf{$\Delta$} \\
 \midrule
-Q1 (autor)     &    7.19 &  0.08 \\
-Q5 (rango)     &    9.64 &  0.19 \\
-Q4 (historial) &  131.05 &  8.00 \\
-Q2 (género)    &   34.01 & 22.41 \\
-Q3 (populares) & 2335.55 & 2345.02 \\
+Q3 (historial)     &  555 &  261 & $-53\%$ \\
+Q2 (populares)     & 7432 & 5557 & $-25\%$ \\
+Q1 (género+rango)  &  626 &  477 & $-24\%$ \\
+Q4 (rango años)    & 3831 & 3038 & $-21\%$ \\
 \bottomrule
 \end{tabular}
 \vspace{0.2cm}
 
-\textbf{3 ganan mucho, 1 poco, 1 nada.}
+\textbf{El índice ayuda más en la búsqueda selectiva con orden (Q3); la agregación total (Q2) es la que menos aprovecha.}
 \end{column}
 \end{columns}
 \end{frame}
 
-\begin{frame}{Q5 --- La consulta por rango (caso estrella)}
+\begin{frame}{Q4 --- La consulta por rango (caso estrella)}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\textwidth]{img/Q5_por_rango_anio.png}
+\includegraphics[width=\textwidth]{img/Q4_usuarios_resenas_destacadas.png}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
-\texttt{WHERE Anio\_Publicacion BETWEEN 1900 AND 1905}
+\texttt{WHERE Anio\_Publicacion BETWEEN 2000 AND 2005 AND Puntaje > 8.5}
 \vspace{0.2cm}
 
 \textbf{Sin índice:} \texttt{Seq Scan} de toda la tabla. Crece con el tamaño.
 
-\textbf{Con índice:} \texttt{Bitmap Index Scan}, toca solo el tramo del rango.
+\textbf{Con índice:} \texttt{Bitmap Index Scan} sobre \texttt{idx\_material\_anio}, toca solo el tramo del rango.
 
 \vspace{0.2cm}
-$\Rightarrow$ \textbf{52× más rápido} en 1M, y casi plano al escalar.
+$\Rightarrow$ en 1M baja de \textbf{3831 a 3038 ms} ($-21\%$); el resto del costo es el \texttt{DISTINCT} y el join con \texttt{Resena}.
 \end{column}
 \end{columns}
 \end{frame}
 
-\begin{frame}{Q3 --- Cuando el índice NO ayuda}
+\begin{frame}{Q2 --- Cuando el índice ayuda poco}
 \begin{columns}
 \begin{column}{0.5\textwidth}
-\includegraphics[width=\textwidth]{img/Q3_populares.png}
+\includegraphics[width=\textwidth]{img/Q2_materiales_populares.png}
 \end{column}
 \begin{column}{0.5\textwidth}
 \footnotesize
-Agregación \textbf{total} de likes, lecturas y reseñas: no hay filtro selectivo.
+Agregación \textbf{total} de likes, lecturas y reseñas (subconsultas independientes): no hay filtro selectivo.
 \vspace{0.2cm}
 
-El motor debe leer las tablas completas con o sin índice.
+El motor debe recorrer las tablas completas; el índice solo recorta el escaneo de \texttt{Resena}.
 \vspace{0.2cm}
 
-\textbf{2335 ms vs 2345 ms} $\to$ 1.0×. Un índice solo ayuda si permite \emph{evitar} leer filas.
+\textbf{7432 ms vs 5557 ms} ($-25\%$): mejora modesta frente a las consultas selectivas. Un índice rinde más cuando permite \emph{evitar} leer filas.
 \end{column}
 \end{columns}
 \end{frame}
@@ -204,7 +203,7 @@ Por eso el planner lo evita: es la decisión correcta.
 \begin{itemize}
   \item Implementación completa del modelo del Hito 1: tablas, restricciones, triggers y vistas.
   \item Cuatro volúmenes reproducibles, hasta $\sim$3.86M de filas.
-  \item El experimento confirma los tres comportamientos del índice: gran beneficio (hasta 91×), moderado (1.5×) y nulo (1.0×); más su costo en escritura (7.6×).
+  \item El experimento confirma que el beneficio depende de la consulta: gran mejora en la búsqueda selectiva con orden (Q3, $-53\%$ en 1M), moderada en los filtros por rango (Q1, Q4) y poca en la agregación total (Q2); más su costo en escritura (7.6×).
   \item \textbf{Indexar es una decisión por consulta y por selectividad}, no una receta universal.
   \item Por encima del millón: la arquitectura cliente-servidor basta para consultas selectivas bien indexadas; las agregaciones totales son el límite.
 \end{itemize}

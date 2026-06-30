@@ -1,27 +1,29 @@
 -- =====================================================================
 -- 05_drop_indexes.sql
--- Elimina los índices secundarios creados en 04_indexes.sql para medir
--- el escenario "sin índices". NO toca los índices implícitos de
--- PK/UNIQUE (son parte del esquema base).
+-- Elimina los índices secundarios de 04_indexes.sql para medir el
+-- escenario "sin índices". NO toca los índices implícitos de PK/UNIQUE
+-- (son parte del esquema base).
 --
--- NOTA experimental: como las PK de Leer/Likes/Escribe/Pertenece
--- empiezan por Material_Id, los filtros/joins por Material_Id seguirán
--- usando la PK aunque aquí no quede ningún índice secundario. Por eso
--- las consultas que demuestran el contraste filtran por columnas NO
--- líderes de la PK (Autor_Id, Genero_Nombre, Username/Email) o son
--- agregaciones totales (Consulta 3).
+-- Como las PK de Leer/Likes/Escribe/Pertenece empiezan por Material_Id,
+-- los joins por Material_Id siguen apoyándose en la PK aunque aquí no
+-- quede ningún índice secundario. Por eso el contraste más limpio aparece
+-- en columnas que NO lideran una PK (Genero_Nombre, el camino de usuario
+-- en Leer, Resena.Material_Id, Material.Anio_Publicacion).
 -- =====================================================================
 
-DROP INDEX IF EXISTS idx_escribe_autor;
 DROP INDEX IF EXISTS idx_pertenece_genero;
+DROP INDEX IF EXISTS idx_material_agerate;
+DROP INDEX IF EXISTS idx_agerate_code;
 
 DROP INDEX IF EXISTS idx_resena_material;
 DROP INDEX IF EXISTS idx_resena_material_punt;
+DROP INDEX IF EXISTS idx_likes_material;
+DROP INDEX IF EXISTS idx_leer_material;
 
 DROP INDEX IF EXISTS idx_leer_usuario;
 
-DROP INDEX IF EXISTS idx_pertenecesub_subgenero;
-
 DROP INDEX IF EXISTS idx_material_anio;
-DROP INDEX IF EXISTS idx_material_editorial;
-DROP INDEX IF EXISTS idx_material_agerate;
+
+DROP INDEX IF EXISTS idx_escribe_autor;
+
+ANALYZE;

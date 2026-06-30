@@ -21,8 +21,9 @@ El espíritu de las correcciones fue **doble**: (1) cerrar reglas de negocio del
 | G | Tipo de dato | `Resena.Puntaje`: `DOUBLE PRECISION` → `NUMERIC(3,1)` | `01_tables.sql` |
 | H | Integridad referencial | `ON UPDATE CASCADE` en las FK hacia `Usuario` | `01_tables.sql` |
 | I | Modelo | Nueva tabla `PerteneceSubGenero` (Material ↔ SubGénero) | `01_tables.sql`, `03_views.sql` |
-| J | Experimento | Reescritura de la Consulta 3 para eliminar producto cartesiano | `06_experiments.sql` |
-| K | Experimento | Eliminación de índices redundantes con la PK | `04_indexes.sql`, `05_drop_indexes.sql` |
+| J | Experimento | Consulta de popularidad con subconsultas agregadas independientes | `06_experiments.sql` |
+| K | Experimento | Índices alineados con los caminos de acceso de las 4 consultas | `04_indexes.sql`, `05_drop_indexes.sql` |
+| M | Modelo | Nueva tabla `ImagenMaterial` (3 URLs de portada por material) | `01_tables.sql`, `03_views.sql` |
 
 ---
 
@@ -50,7 +51,7 @@ El espíritu de las correcciones fue **doble**: (1) cerrar reglas de negocio del
 ### [Cambio D] `Leer`: `Fecha` forma parte de la PK
 **Qué:** la PK pasó de `(Material_Id, Usuario_Username, Usuario_Email)` a `(Material_Id, Usuario_Username, Usuario_Email, Fecha)`, y `Fecha` es `NOT NULL`.
 
-**Por qué:** con la PK del Hito 1, un usuario solo podía registrar **una** lectura por material; era imposible modelar relecturas. Como `Leer` representa el *historial de lectura*, lo correcto es que la fecha distinga eventos. Beneficio adicional: hace la tabla más voluminosa y realista, lo que fortalece la Consulta 4 (historial) como caso de demostración de índices.
+**Por qué:** con la PK del Hito 1, un usuario solo podía registrar **una** lectura por material; era imposible modelar relecturas. Como `Leer` representa el *historial de lectura*, lo correcto es que la fecha distinga eventos. Beneficio adicional: hace la tabla más voluminosa y realista, lo que fortalece la Consulta 3 (historial) como caso de demostración de índices.
 
 ### [Cambio E] `Resena`: una reseña por usuario-material
 **Qué:** se agregó `UNIQUE (Material_Id, Usuario_Username, Usuario_Email)`.
@@ -77,20 +78,15 @@ El espíritu de las correcciones fue **doble**: (1) cerrar reglas de negocio del
 
 **Por qué:** el Hito 1 lista "listar materiales por subgénero" como consulta requerida (sección 1.5.4), pero **el modelo relacional dejó `SubGenero` sin ninguna relación con `Material`**: `Pertenece` solo conecta Material↔Género. La entidad quedaba aislada del catálogo y la consulta era imposible. Esta tabla cierra ese hueco.
 
-### [Cambio J] Reescritura de la Consulta 3 (experimento)
-**Qué:** la Consulta 3 ("materiales más populares") se reescribió para agregar cada métrica (likes, lecturas, reseñas, promedio) en **subconsultas independientes** que luego se combinan, en vez de hacer tres `LEFT JOIN` 1-a-muchos directos sobre `Material`.
+### [Cambio J] Consulta de popularidad con subconsultas agregadas independientes
+**Qué:** la consulta de "materiales más populares" (Q2) calcula cada métrica (likes, lecturas, reseñas, promedio) en **subconsultas independientes** que agregan por material y luego se combinan con `LEFT JOIN`.
 
-**Por qué:** la versión anterior producía un **producto cartesiano** (`#likes × #lecturas × #reseñas` filas intermedias por material). Aunque los resultados eran correctos, el costo explotaba y habría distorsionado el benchmark: el caso "sin índice" se vería lento por la consulta mal formulada, no por la ausencia de índice. La versión corregida mide lo que se quiere medir: una agregación total (caso donde, justamente, los índices secundarios no ayudan).
+**Por qué:** combinar las tres tablas 1-a-muchos con `LEFT JOIN` directos sobre `Material` multiplicaría las filas intermedias (`#likes × #lecturas × #reseñas` por material) y distorsionaría el benchmark: el costo vendría de la forma de la consulta, no de los índices. Con subconsultas agregadas, Q2 mide lo que debe medir: una **agregación total** (el caso donde el índice secundario ayuda poco).
 
-### [Cambio K] Eliminación de índices redundantes con la PK
-**Qué:** se quitaron del set experimental los índices sobre `Material_Id` en `Escribe`, `Pertenece`, `Likes` y `Leer`.
+### [Cambio K] Índices alineados con los caminos de acceso de las 4 consultas
+**Qué:** el set de índices secundarios cubre los filtros y joins de las 4 consultas. El mayor contraste con/sin índice aparece sobre columnas que **no** lideran ninguna PK (`Pertenece.Genero_Nombre`, `Resena.Material_Id` —cuya PK es `Code`—, el camino de usuario en `Leer`, `Material.Anio_Publicacion`), porque ahí el escenario "sin índices" degrada a `Seq Scan`.
 
-**Por qué:** en esas tablas la PK ya **empieza** por `Material_Id`, de modo que un índice adicional sobre esa columna nunca se usaría y mostraría 0% de mejora, ensuciando los resultados. Se conservan únicamente los índices sobre columnas **no** cubiertas por la primera columna de alguna PK (`Escribe.Autor_Id`, `Pertenece.Genero_Nombre`, `Resena.Material_Id` —cuya PK es `Code`—, `Leer(Username, Email, Fecha)`, etc.), que son los que producen un contraste real con/sin índice.
-
-### [Cambio L] Consulta por RANGO de años (Q5)
-**Qué:** se agregó una quinta consulta experimental (`querys/q5_materiales_por_rango_anio.sql` y en `sql/06_experiments.sql`) que filtra `Material.Anio_Publicacion BETWEEN ... AND ...`.
-
-**Por qué:** requisito explícito del profesor: al menos una consulta debe filtrar por **rango**, para mostrar la ventaja de un índice B-tree resolviendo un predicado `BETWEEN` (recorre un tramo contiguo de las hojas del árbol). Se apoya en el índice `idx_material_anio`. Con un rango selectivo (primeros años, escasos) el planner usa `Bitmap Index Scan` y gana de forma clara; con un rango amplio vuelve a `Seq Scan` a propósito (crossover por selectividad), lo cual también es un resultado a reportar.
+**Por qué:** en `Escribe`, `Pertenece`, `Likes` y `Leer` la PK ya empieza por `Material_Id`, así que los joins por esa columna se apoyan en la PK. Sobre `Likes` y `Leer` se añaden índices **estrechos** de una sola columna (`Material_Id`) porque permiten resolver el conteo de Q2 con un *index-only scan* más liviano que recorrer la PK completa; el resto de los índices ataca columnas no cubiertas por ninguna PK, que son las que producen el contraste real del experimento.
 
 ### [Cambio M] Portadas por material (tabla `ImagenMaterial`)
 **Qué:** se agregó la tabla `ImagenMaterial(Material_Id, URLs)` —una fila por material con un arreglo `TEXT[]` de **3 URLs de imagen**— más la vista `vista_material_portadas`. Cada material queda con tres portadas. Las URLs apuntan a **Lorem Picsum** (`https://picsum.photos/seed/litmat<id>-<n>/400/600`).

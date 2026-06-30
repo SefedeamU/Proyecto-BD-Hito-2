@@ -281,7 +281,7 @@ todas las tablas. Los cuatro escenarios se entregan como dumps restaurables en
 \subsection{Ajustes al modelo del Hito 1}
 \label{sec:cambios}
 
-Al escribir el código se identificaron trece puntos donde el modelo relacional
+Al escribir el código se identificaron doce puntos donde el modelo relacional
 dejaba reglas del dominio sin mecanismo de cumplimiento, o donde había
 decisiones de diseño que convenía precisar antes de poblar las bases. Todos
 los cambios están marcados como comentarios \texttt{[Cambio X]} en los scripts
@@ -315,13 +315,12 @@ H & Integridad ref. & \texttt{ON UPDATE CASCADE} en las FK que apuntan a
 I & Modelo & Nueva tabla \texttt{PerteneceSubGenero}: el Hito 1 pedía poder
     buscar materiales por subgénero, pero el modelo relacional dejaba a
     \texttt{SubGenero} sin conexión con \texttt{Material}. \\
-J & Experimento & La consulta de materiales populares se reescribió para evitar
-    un producto cartesiano que distorsionaba los tiempos. \\
-K & Experimento & Se quitaron los índices redundantes con la primera columna de
-    alguna PK (no aportan mejora y ensucian el experimento). \\
-L & Experimento & Nueva Consulta~5 que filtra por \emph{rango} de años
-    (\texttt{BETWEEN}), para demostrar un índice B-tree sobre un predicado de
-    rango (a pedido del profesor). \\
+J & Experimento & La consulta de materiales populares agrega cada tabla de
+    interacción en subconsultas independientes para no multiplicar filas
+    (evita el producto cartesiano de unir tres relaciones 1-a-muchos). \\
+K & Experimento & Los índices del experimento se ubican sobre columnas que no
+    lideran ninguna PK: son las que producen un contraste real entre el
+    escenario con y sin índices. \\
 M & Modelo & Nueva tabla \texttt{ImagenMaterial}: cada material recibe un
     arreglo de tres URLs de portada (Lorem Picsum) para la aplicación de
     demostración. Los datos de imagen viven en la base, no en el front-end. \\
@@ -330,17 +329,19 @@ M & Modelo & Nueva tabla \texttt{ImagenMaterial}: cada material recibe un
 \end{center}
 
 Vale la pena detenerse en los cambios J y K porque afectan directamente los
-resultados del experimento. El cambio J corrige la consulta de popularidad:
-la versión original unía las tres tablas de interacción con \texttt{LEFT JOIN}
-directos sobre \texttt{Material}, lo que generaba un producto cartesiano
-(filas de likes por filas de lecturas por filas de reseñas por cada material).
-La versión corregida agrega cada tabla por separado en subconsultas y luego las
-une, de modo que el tiempo que se mide refleja el costo real de una agregación
-total y no un error de formulación. El cambio K retira índices como el de
-\texttt{Material\_Id} en \texttt{Escribe}: como esa columna es la primera de
-la PK de \texttt{Escribe}, ya existe un índice de PK sobre ella y crear uno
-secundario encima no cambia nada; incluirlo en el experimento solo añadiría
-una fila de resultados con 0\% de mejora.
+resultados del experimento. El cambio J describe la forma de la consulta de
+popularidad: en lugar de unir las tres tablas de interacción con
+\texttt{LEFT JOIN} directos sobre \texttt{Material} ---lo que generaría un
+producto cartesiano (filas de likes por filas de lecturas por filas de reseñas
+por cada material)---, la consulta agrega cada tabla por separado en
+subconsultas independientes y luego las combina, de modo que el tiempo que se
+mide refleja el costo real de una agregación total y no un error de
+formulación. El cambio K explica dónde se colocan los índices del experimento:
+sobre columnas que no son la primera de ninguna PK. Una columna que lidera una
+PK ---como \texttt{Material\_Id} en \texttt{Escribe}--- ya tiene un índice de PK
+encima, así que un índice secundario adicional no cambiaría nada; los índices
+del benchmark se ubican justo en las columnas donde sí aparece contraste entre
+el escenario con y sin índices.
 
 % ==================================================================
 \section{Optimización y Experimentación}
@@ -349,29 +350,32 @@ una fila de resultados con 0\% de mejora.
 
 \subsubsection{Criterios de selección}
 
-Se eligieron cinco consultas que cubren patrones de acceso distintos. El
+Se eligieron cuatro consultas que cubren patrones de acceso distintos. El
 criterio principal fue que el conjunto en su totalidad mostrara los tres
 comportamientos posibles de un índice secundario: cuándo ayuda mucho,
-cuándo ayuda poco y cuándo no ayuda. Una de las consultas es por rango
-(\texttt{BETWEEN}), que es el caso más ilustrativo del funcionamiento de
+cuándo ayuda poco y cuándo no ayuda. Dos de las consultas filtran por rango
+(\texttt{BETWEEN}) ---Q1 sobre el código de clasificación de edad y Q4 sobre
+el año de publicación---, que es el caso más ilustrativo del funcionamiento de
 un índice B-tree.
 
 \begin{center}
-\begin{longtable}{p{0.9cm}p{4.2cm}p{4.0cm}p{3.4cm}}
+\begin{longtable}{p{0.9cm}p{4.6cm}p{4.2cm}p{3.0cm}}
 \toprule
 \textbf{ID} & \textbf{Qué devuelve} & \textbf{Tipo de acceso}
   & \textbf{Índice relevante} \\
 \midrule
 \endhead
-Q1 & Materiales de un autor & Filtro selectivo por igualdad
-  & \texttt{idx\_escribe\_autor} \\
-Q2 & Materiales de un género & Filtro poco selectivo por igualdad
-  & \texttt{idx\_pertenece\_genero} \\
-Q3 & Los 20 materiales más populares & Agregación total sin filtro
-  & (ninguno aplica) \\
-Q4 & Historial de lectura de un usuario & Igualdad + orden por fecha
+Q1 & Materiales de un género acotados por clasificación de edad
+  & Igualdad (género) + rango (\texttt{code BETWEEN})
+  & \texttt{idx\_pertenece\_genero}, \texttt{idx\_material\_agerate} \\
+Q2 & Los 20 materiales más populares (ranking)
+  & Agregación total (subconsultas independientes)
+  & \texttt{idx\_resena\_material} \\
+Q3 & Historial de lectura de un usuario
+  & Igualdad selectiva + filtro temporal + orden
   & \texttt{idx\_leer\_usuario} \\
-Q5 & Materiales en un rango de años & \textbf{Rango} (\texttt{BETWEEN})
+Q4 & Usuarios con reseñas destacadas por rango de años
+  & \textbf{Rango} (\texttt{año BETWEEN}) + puntaje alto + \texttt{DISTINCT}
   & \texttt{idx\_material\_anio} \\
 \bottomrule
 \end{longtable}
@@ -383,22 +387,27 @@ Las consultas están limpias en \texttt{querys/} y con \texttt{EXPLAIN
 (ANALYZE, BUFFERS)} en \texttt{sql/06\_experiments.sql}. Se reproducen
 aquí las dos más representativas del experimento.
 
-\paragraph{Q5 --- Materiales por rango de años.}
+\paragraph{Q4 --- Usuarios con reseñas destacadas por rango de años.}
 
 \begin{lstlisting}
-SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
-FROM   Material m
-WHERE  m.Anio_Publicacion BETWEEN 1900 AND 1905
-ORDER  BY m.Anio_Publicacion;
+SELECT DISTINCT u.Username, u.Email
+FROM   Usuario  u
+JOIN   Resena   r   ON r.Usuario_Username = u.Username
+                   AND r.Usuario_Email    = u.Email
+JOIN   Material m   ON m.Id = r.Material_Id
+WHERE  m.Anio_Publicacion BETWEEN 2000 AND 2005
+  AND  r.Puntaje > 8.5;
 \end{lstlisting}
 
-El rango elegido (primeros años del catálogo) es selectivo: recupera
-aproximadamente el 0.1\% de las filas en la base de 1M. Eso permite que
-el planificador use el índice \texttt{idx\_material\_anio} de forma
-natural, sin forzarlo. En la Sección~\ref{sec:crossover} se analiza
-qué pasa cuando el rango es más amplio.
+El predicado de \emph{rango} sobre \texttt{Anio\_Publicacion}
+(\texttt{BETWEEN 2000 AND 2005}) es el caso más ilustrativo de un índice
+B-tree: el índice \texttt{idx\_material\_anio} permite recorrer solo el
+tramo de años pedido en lugar de leer la tabla completa. El filtro adicional
+por puntaje alto (\texttt{Puntaje > 8.5}) se apoya en
+\texttt{idx\_resena\_material\_punt}, y el \texttt{DISTINCT} colapsa los
+usuarios que califican con más de una reseña.
 
-\paragraph{Q4 --- Historial de lectura de un usuario.}
+\paragraph{Q3 --- Historial de lectura de un usuario.}
 
 \begin{lstlisting}
 SELECT m.Id, m.Alias, le.Fecha
@@ -408,6 +417,7 @@ JOIN   Leer     le  ON le.Usuario_Username = u.Username
 JOIN   Material m   ON m.Id = le.Material_Id
 WHERE  u.Username = :username
   AND  u.Email    = :email
+  AND  EXTRACT(YEAR FROM le.Fecha) > 2004
 ORDER  BY le.Fecha DESC;
 \end{lstlisting}
 
@@ -435,9 +445,10 @@ por fecha descendente, lo que evita el paso de \texttt{Sort}.
   que elimina todos los índices secundarios. Los de \texttt{PRIMARY KEY} y
   \texttt{UNIQUE} no se pueden quitar porque son parte del esquema; por eso
   las consultas del experimento filtran por columnas que no son la primera
-  de ninguna PK (\texttt{Autor\_Id}, \texttt{Genero\_Nombre},
-  \texttt{Usuario\_Username}/\texttt{Email}, \texttt{Anio\_Publicacion})
-  o son agregaciones totales donde ningún índice aplica (Q3).
+  de ninguna PK (\texttt{Genero\_Nombre}, \texttt{agerate\_code},
+  \texttt{Usuario\_Username}/\texttt{Email}, \texttt{Anio\_Publicacion},
+  \texttt{Material\_Id} en \texttt{Resena})
+  o son agregaciones totales donde ningún índice aplica (Q2).
 
   \item \textbf{Escenario con índices:} se ejecuta \texttt{sql/04\_indexes.sql}
   y luego \texttt{ANALYZE} para que el planificador tenga estadísticas
@@ -448,19 +459,31 @@ por fecha descendente, lo que evita el paso de \texttt{Sort}.
 
 \subsection{Índices del experimento}
 
+El experimento usa diez índices B-tree no únicos. Todos se ubican sobre
+columnas que no lideran ninguna PK (Sección~\ref{sec:cambios}, cambio K):
+
 \begin{center}
-\begin{tabular}{ll}
+\begin{tabular}{lll}
 \toprule
-\textbf{Nombre} & \textbf{Definición} \\
+\textbf{Nombre} & \textbf{Definición} & \textbf{Apoya} \\
 \midrule
-\texttt{idx\_escribe\_autor}    & \texttt{Escribe(Autor\_Id)} \\
-\texttt{idx\_pertenece\_genero} & \texttt{Pertenece(Genero\_Nombre)} \\
-\texttt{idx\_resena\_material}  & \texttt{Resena(Material\_Id)} \\
-\texttt{idx\_leer\_usuario}     & \texttt{Leer(Usuario\_Username, Usuario\_Email, Fecha DESC)} \\
-\texttt{idx\_material\_anio}    & \texttt{Material(Anio\_Publicacion)} \\
+\texttt{idx\_pertenece\_genero}   & \texttt{Pertenece(Genero\_Nombre)} & Q1 \\
+\texttt{idx\_material\_agerate}   & \texttt{Material(agerate\_code)} & Q1 \\
+\texttt{idx\_agerate\_code}       & \texttt{AgeRate(code)} & Q1 \\
+\texttt{idx\_resena\_material}    & \texttt{Resena(Material\_Id)} & Q2, Q4 \\
+\texttt{idx\_resena\_material\_punt} & \texttt{Resena(Material\_Id, Puntaje)} & Q2, Q4 \\
+\texttt{idx\_likes\_material}     & \texttt{Likes(Material\_Id)} & Q2 \\
+\texttt{idx\_leer\_material}      & \texttt{Leer(Material\_Id)} & Q2 \\
+\texttt{idx\_leer\_usuario}       & \texttt{Leer(Usuario\_Username, Usuario\_Email, Fecha DESC)} & Q3 \\
+\texttt{idx\_material\_anio}      & \texttt{Material(Anio\_Publicacion)} & Q4 \\
+\texttt{idx\_escribe\_autor}      & \texttt{Escribe(Autor\_Id)} & apoyo \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+La PK de \texttt{Resena} es \texttt{Code}, de modo que \texttt{Material\_Id}
+no queda cubierto por ningún índice de PK: por eso \texttt{idx\_resena\_material}
+y \texttt{idx\_resena\_material\_punt} sí producen contraste en Q2 y Q4.
 
 \subsection{Plataforma de pruebas}
 
@@ -495,7 +518,7 @@ descritas en la Sección~1.3.
 %   5. Correr de nuevo y anotar los nuevos "Execution Time":
 %      \i sql/06_experiments.sql
 %
-%   Con esos 40 valores (5 consultas × 4 bases × 2 escenarios) se completan
+%   Con esos 32 valores (4 consultas × 4 bases × 2 escenarios) se completan
 %   las dos tablas de abajo, se generan los gráficos y se redactan los
 %   análisis que aparecen como pendientes en este documento.
 % ===========================================================================
@@ -508,11 +531,10 @@ descritas en la Sección~1.3.
 \textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
   & \textbf{100K (ms)} & \textbf{1M (ms)} \\
 \midrule
-Q1 (autor)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q2 (género)    & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q3 (populares) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q4 (historial) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q1 (género+rango) &  301 &  415 &  451 &  626 \\
+Q2 (populares)    &  848 &  924 & 1028 & 7432 \\
+Q3 (historial)    &  293 &  353 &  427 &  555 \\
+Q4 (rango años)   &  890 &  915 & 1139 & 3831 \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -525,14 +547,24 @@ Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & 
 \textbf{Consulta} & \textbf{1K (ms)} & \textbf{10K (ms)}
   & \textbf{100K (ms)} & \textbf{1M (ms)} \\
 \midrule
-Q1 (autor)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q2 (género)    & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q3 (populares) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q4 (historial) & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
-Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} \\
+Q1 (género+rango) &  283 &  337 &  310 &  477 \\
+Q2 (populares)    &  881 &  913 &  980 & 5557 \\
+Q3 (historial)    &  297 &  283 &  318 &  261 \\
+Q4 (rango años)   &  817 &  913 & 1070 & 3038 \\
 \bottomrule
 \end{tabular}
 \end{center}
+
+\textbf{Lectura de las tablas.} En 1K y 10K el índice apenas se nota: en
+tablas pequeñas el planificador a menudo ignora el índice y hace
+\texttt{Seq Scan}, y dos casos (Q2 y Q3 en 1K) incluso salen levemente más
+lentos \emph{con} índice (881 vs.\ 848 ms en Q2; 297 vs.\ 293 ms en Q3). No es
+un error: es ruido de medición sobre tiempos casi idénticos y evidencia de que
+un índice no siempre ayuda. El contraste real aparece en 100K y 1M, cuando la
+tabla ya no cabe holgada en memoria y el plan basado en índice gana terreno
+(\emph{crossover} por selectividad). El mayor beneficio relativo es Q3, que en
+1M baja de 555 a 261 ms ($-53\%$); Q2, una agregación total, es el que menos
+mejora.
 
 \subsection{Resultados}
 
@@ -549,31 +581,33 @@ Q5 (rango)     & \textit{pendiente} & \textit{pendiente} & \textit{pendiente} & 
 \textit{[Sección pendiente de completar una vez obtenidos los tiempos del
 servidor.]}
 
-\subsubsection{Q1 --- Materiales de un autor}
+\subsubsection{Q1 --- Materiales de un género acotados por clasificación de edad}
 
 \textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de por qué \texttt{idx\_escribe\_autor} ayuda.]}
+explicación de cómo el filtro por igualdad de género (\texttt{idx\_pertenece\_genero})
+y el rango sobre \texttt{code} (\texttt{idx\_material\_agerate},
+\texttt{idx\_agerate\_code}) combinan acceso por igualdad y por rango.]}
 
-\subsubsection{Q2 --- Materiales de un género}
-
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación del impacto de la selectividad del filtro.]}
-
-\subsubsection{Q3 --- Materiales más populares}
+\subsubsection{Q2 --- Materiales más populares}
 
 \textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de por qué el índice no aporta en agregaciones totales.]}
+explicación de por qué el índice no aporta en agregaciones totales (en 1M baja
+solo de 7432 a 5557 ms) y por qué \texttt{idx\_resena\_material} es el único
+que ayuda, dado que \texttt{Material\_Id} no lidera la PK de \texttt{Resena}.]}
 
-\subsubsection{Q4 --- Historial de lectura de un usuario}
-
-\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación de \texttt{idx\_leer\_usuario} y cómo evita el paso de Sort.]}
-
-\subsubsection{Q5 --- Consulta por rango}
+\subsubsection{Q3 --- Historial de lectura de un usuario}
 
 \textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
-explicación del Bitmap Index Scan y la bondad del índice B-tree en
-predicados BETWEEN selectivos. También analizar qué ocurre con rangos
+explicación de \texttt{idx\_leer\_usuario} y cómo, además de filtrar por
+usuario y por el año de la lectura, entrega el orden ya resuelto y evita el
+paso de Sort. Es el mayor ganador del índice: en 1M baja de 555 a 261 ms.]}
+
+\subsubsection{Q4 --- Usuarios con reseñas destacadas por rango de años}
+
+\textit{[Pendiente. Incluir: tiempos, plan EXPLAIN sin y con índice,
+explicación del Bitmap Index Scan sobre \texttt{idx\_material\_anio} y la
+bondad del índice B-tree en predicados BETWEEN selectivos, junto con el filtro
+por puntaje alto y el \texttt{DISTINCT}. También analizar qué ocurre con rangos
 amplios (el punto de cruce por selectividad).]}
 
 \subsection{El costo de los índices}
@@ -609,7 +643,7 @@ en la base de 1M como referencia principal.]}
   \item Se implementó en PostgreSQL el modelo relacional del Hito 1: 25 tablas
   con restricciones de integridad (PK, FK, UNIQUE, NOT NULL, CHECK), cuatro
   triggers para reglas multi-tabla (dos de ellos diferidos) y cinco vistas de
-  usuario. Los trece ajustes al modelo se documentaron de forma transparente.
+  usuario. Los doce ajustes al modelo se documentaron de forma transparente.
 
   \item Se generaron cuatro escenarios de volumen reproducibles, hasta
   aproximadamente 3.86 millones de filas en el escenario de 1M, mediante un
@@ -617,7 +651,7 @@ en la base de 1M como referencia principal.]}
 
   \item \textit{[Pendiente: agregar las conclusiones del experimento una vez
   obtenidos los tiempos reales. Deben mencionar qué consultas se beneficiaron
-  del índice y en qué medida, el comportamiento de la consulta por rango (Q5),
+  del índice y en qué medida, el comportamiento de la consulta por rango (Q4),
   y el costo de los índices en escrituras.]}
 \end{itemize}
 
@@ -638,7 +672,7 @@ en la base de 1M como referencia principal.]}
 \texttt{sql/05\_drop\_indexes.sql}   & Quita los índices secundarios. \\
 \texttt{sql/06\_experiments.sql}     & Consultas con \texttt{EXPLAIN (ANALYZE, BUFFERS)}. \\
 \texttt{sql/07\_index\_overhead.sql} & Demostración del costo de los índices. \\
-\texttt{querys/}                     & Las cinco consultas limpias (Q1--Q5). \\
+\texttt{querys/}                     & Las cuatro consultas limpias (Q1--Q4). \\
 \texttt{faker/}                      & Generador de datos sintéticos. \\
 \texttt{dumps/}                      & Dumps restaurables de las cuatro bases. \\
 \texttt{results/}                    & CSV de resultados y gráficos (pendiente). \\
@@ -654,10 +688,10 @@ base de 1 millón de registros: medición sin índices, creación de índices,
 medición con índices y comparación de planes y tiempos. El guion detallado
 está en \texttt{video/README\_guion.md} del repositorio.]}
 
-\subsection{Planes de ejecución (Q5, base 1M)}
+\subsection{Planes de ejecución (Q4, base 1M)}
 
 \textit{[Pendiente. Capturar la salida de \texttt{EXPLAIN (ANALYZE, BUFFERS)}
-para la consulta Q5 sobre \texttt{bd\_literaria\_1m}, primero sin el índice
+para la consulta Q4 sobre \texttt{bd\_literaria\_1m}, primero sin el índice
 \texttt{idx\_material\_anio} y luego con él. Pegar los resultados aquí.]}
 
 \end{document}

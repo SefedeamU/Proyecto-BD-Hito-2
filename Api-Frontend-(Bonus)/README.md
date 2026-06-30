@@ -12,8 +12,10 @@ frontend/   SPA en Angular (puerto 4200), paleta blanco hueso + mostaza, layout 
 La demo cubre: **login/registro**, **catálogo** con portadas (tabla `ImagenMaterial`,
 [Cambio M]), **búsqueda** y filtros por género/tipo, **detalle** del material con
 galería de 3 imágenes + autores + géneros + métricas, **reseñas** y **likes**
-(escrituras reales a la BD), y **historial de lectura** del usuario (consulta Q4).
-Todos los datos salen de PostgreSQL.
+(escrituras reales a la BD), y **historial de lectura** del usuario (consulta Q3).
+Todos los datos salen de PostgreSQL. Un **selector global en el topbar** permite
+cambiar entre las 4 bases de volumen (1K/10K/100K/1M) en caliente, y todas las
+consultas se enrutan a la base elegida.
 
 ## 1. Backend (Go + Docker Compose, puerto 7000)
 
@@ -30,12 +32,16 @@ set -a; . ./.env; set +a
 go run .
 ```
 
-La base se elige con `PGDATABASE` en el `.env` (por defecto `bd_literaria_10k`,
-buen tamaño para navegar; puedes apuntar a `bd_literaria_1m`).
+**Multi-base.** La API se conecta a las 4 bases listadas en `DATABASES` del `.env`
+(por defecto las cuatro: `bd_literaria_1k,bd_literaria_10k,bd_literaria_100k,bd_literaria_1m`)
+y enruta cada consulta a la base que el frontend pida mediante el header
+`X-Database` (o `?db=`). `PGDATABASE` es solo la base por defecto cuando no se
+especifica ninguna. Los pools se crean de forma perezosa y con allowlist.
 
-Endpoints principales: `GET /api/materials`, `/api/materials/{id}`,
-`/api/materials/{id}/reviews`, `/api/popular`, `/api/genres`, `/api/stats`,
-`POST /api/login`, `/api/register`, `/api/materials/{id}/like`, `/api/users/{u}/history`.
+Endpoints principales: `GET /api/databases` (bases disponibles), `/api/materials`,
+`/api/materials/{id}`, `/api/materials/{id}/reviews`, `/api/popular`, `/api/genres`,
+`/api/stats`, `POST /api/login`, `/api/register`, `/api/materials/{id}/like`,
+`/api/users/{u}/history`.
 
 **Búsqueda avanzada** — `GET /api/search` acepta ~30 parámetros que se traducen
 en una consulta con múltiples JOINs, subconsultas `EXISTS` y filtros sobre
@@ -56,8 +62,11 @@ npm install        # solo la primera vez
 ng serve           # http://localhost:4200
 ```
 
-El frontend apunta a `http://localhost:7000/api` (constante `API` en
-`src/app/core/api.ts`). Levanta primero el backend.
+El frontend resuelve la base del API en `src/app/core/api.ts`: por defecto apunta
+a la API desplegada en la EC2 (puerto 7000), de modo que sirve igual abierto en
+local o como sitio estático (p. ej. S3). Puede forzarse con `window.__API_BASE__`
+en `dist/index.html` sin recompilar. Para desarrollo contra un backend local,
+ajusta esa resolución o define el override.
 
 ## Notas
 - Las **credenciales** se leen del `.env` (no versionado). El `.env.example` es la plantilla.

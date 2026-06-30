@@ -38,9 +38,9 @@ proyecto y deben reflejarse en el informe.
 │   ├── 03_views.sql              # vistas de usuario
 │   ├── 04_indexes.sql            # índices secundarios del experimento
 │   ├── 05_drop_indexes.sql       # elimina los secundarios (medir "sin índices")
-│   ├── 06_experiments.sql        # las 5 consultas con EXPLAIN (ANALYZE, BUFFERS)
+│   ├── 06_experiments.sql        # las 4 consultas con EXPLAIN (ANALYZE, BUFFERS)
 │   └── 07_index_overhead.sql     # demo de cuándo el índice PERJUDICA
-├── querys/                       # las 5 consultas limpias (para revisión directa)
+├── querys/                       # las 4 consultas limpias (para revisión directa)
 ├── faker/                        # proyecto de poblamiento (ver faker/README.md)
 ├── dumps/                        # dumps restaurables de las 4 bases
 ├── results/                      # resultados_experimento.csv (tiempos con/sin índices)
@@ -73,10 +73,10 @@ Resumen:
 | G | `Resena.Puntaje` → `NUMERIC(3,1)` | "un decimal de precisión" del Hito 1 |
 | H | `ON UPDATE CASCADE` en FKs a `Usuario` | poder corregir credenciales |
 | I | Nueva tabla `PerteneceSubGenero` + vista | habilitar "materiales por subgénero" |
-| J | Reescritura de la Consulta 3 | eliminar producto cartesiano del benchmark |
-| K | Quitar índices redundantes con la PK | evitar índices que dan 0% de mejora |
-| L | Nueva Consulta 5 por **rango** de años (`BETWEEN`) | requisito del profesor: demostrar índice B-tree en predicados de rango |
 | M | Tabla `ImagenMaterial` (3 URLs de portada por material) | la demo necesita imágenes; los datos viven en la BD, no en el front-end |
+
+Decisiones de diseño del **benchmark** (consultas e índices del experimento, no
+diferencias con el Hito 1) se detallan en la sección B de este README.
 
 Decisiones de **NO cambiar** (fidelidad al Hito 1): PK compuesta de `Usuario`,
 tablas de subtipo, validación temporal solo del lado "hijo". Nota: cualquier
@@ -87,7 +87,7 @@ usuario `Registrado` puede publicar/interactuar (no se modeló un rol *publisher
 Esta es una decisión central del proyecto y conviene explicarla con precisión.
 
 #### Tipo de índices
-Los **9 índices** de `04_indexes.sql` son **todos B-tree, secundarios y NO únicos**.
+Los **10 índices** de `04_indexes.sql` son **todos B-tree, secundarios y NO únicos**.
 
 - **No hay índices agrupados (clustered).** A diferencia de SQL Server o
   MySQL/InnoDB, **PostgreSQL no tiene índices agrupados**: todas las tablas son
@@ -104,52 +104,56 @@ Los **9 índices** de `04_indexes.sql` son **todos B-tree, secundarios y NO úni
   `resena_pkey(code)` + `uq_resena_usuario_material(material,usuario)` `[Cambio E]`,
   y las PK compuestas de las tablas M:N (que además impiden duplicados, p. ej. un
   like único por usuario-material).
-- **Los 9 de `04_indexes.sql` son secundarios NO únicos** porque las columnas
-  indexadas tienen duplicados por naturaleza (un autor escribe muchos materiales,
-  un género agrupa muchos materiales, etc.).
+- **Los 10 de `04_indexes.sql` son secundarios NO únicos** porque las columnas
+  indexadas tienen duplicados por naturaleza (un género agrupa muchos materiales,
+  un material recibe muchas reseñas, etc.).
 
-#### Mapa índice ↔ tabla ↔ lógica de negocio
+#### Mapa índice ↔ tabla ↔ consulta
 
 | Índice | Tabla (columnas) | Característica | Consulta | Lógica de negocio |
 |--------|------------------|---------------|----------|-------------------|
-| `idx_escribe_autor` | Escribe(autor_id) | B-tree no único | Q1 | materiales de un autor |
-| `idx_pertenece_genero` | Pertenece(genero_nombre) | B-tree no único | Q2 | materiales de un género |
-| `idx_resena_material` | Resena(material_id) | B-tree no único | Q3 | reseñas de un material / agregación |
-| `idx_resena_material_punt` | Resena(material_id, puntaje) | B-tree compuesto **cubridor** | Q3 | promedio/orden por puntaje sin leer la tabla |
-| `idx_leer_usuario` | Leer(username, email, **fecha DESC**) | B-tree compuesto | Q4 | historial de un usuario **ya ordenado** |
-| `idx_pertenecesub_subgenero` | PerteneceSubGenero(genero, subgenero) | B-tree compuesto | — | materiales por subgénero |
-| `idx_material_anio` | Material(anio_publicacion) | B-tree no único | apoyo | filtrar por año |
-| `idx_material_editorial` | Material(editorial_id) | B-tree no único | apoyo | join por editorial |
-| `idx_material_agerate` | Material(agerate_code) | B-tree no único | apoyo | filtrar por clasificación de edad |
+| `idx_pertenece_genero` | Pertenece(genero_nombre) | B-tree no único | Q1 | materiales de un género |
+| `idx_material_agerate` | Material(agerate_code) | B-tree no único | Q1 | acotar por clasificación de edad |
+| `idx_agerate_code` | AgeRate(code) | B-tree no único | Q1 | join/rango por clasificación |
+| `idx_resena_material` | Resena(material_id) | B-tree no único | Q2, Q4 | reseñas por material (PK de Resena es Code) |
+| `idx_resena_material_punt` | Resena(material_id, puntaje) | B-tree compuesto **cubridor** | Q2, Q4 | promedio y filtro por puntaje sin leer la tabla |
+| `idx_likes_material` | Likes(material_id) | B-tree no único | Q2 | conteo de likes por material |
+| `idx_leer_material` | Leer(material_id) | B-tree no único | Q2 | conteo de lecturas por material |
+| `idx_leer_usuario` | Leer(username, email, **fecha DESC**) | B-tree compuesto | Q3 | historial de un usuario **ya ordenado** |
+| `idx_material_anio` | Material(anio_publicacion) | B-tree no único | Q4 | filtrar por **rango** de años (`BETWEEN`) |
+| `idx_escribe_autor` | Escribe(autor_id) | B-tree no único | apoyo | camino "materiales por autor" |
 
-Los dos más relevantes para el negocio:
-- **`idx_leer_usuario`**: compuesto y con `fecha DESC`, de modo que el historial
+Los dos más relevantes:
+- **`idx_leer_usuario`** (Q3): compuesto y con `fecha DESC`, de modo que el historial
   de un usuario sale **filtrado y ya ordenado** (el índice satisface el `ORDER BY`
-  y elimina el paso de `Sort`).
-- **`idx_resena_material_punt`**: índice **cubridor**; el `AVG(puntaje)` por
-  material puede resolverse con *index-only scan*, sin tocar la tabla.
+  y elimina el paso de `Sort`). Es el de mayor impacto en el experimento.
+- **`idx_resena_material_punt`** (Q2/Q4): índice **cubridor**; el `AVG(puntaje)` y el
+  filtro por puntaje pueden resolverse con *index-only scan*, sin tocar la tabla.
 
 #### ¿Se nota la diferencia con/sin índices?
 Sí, principalmente en **100k y 1M**, y de forma distinta según la consulta (eso es
-lo interesante del experimento):
+lo interesante del experimento). Tiempos medidos en `bd_literaria_1m` (ms, caliente):
 
-| Consulta | Sin índice | Con índice | Diferencia esperada |
-|----------|-----------|-----------|---------------------|
-| **Q4** historial usuario (Leer 1M) | seq scan 1M + Sort | index scan (~pocas filas), ya ordenado | 🟢 enorme (cientos de ms → <1 ms) |
-| **Q1** por autor (Escribe ~130k) | seq scan | index scan directo | 🟢 clara |
-| **Q2** por género (Pertenece ~150k) | seq scan | bitmap/index (~1% filas) | 🟡 moderada (baja cardinalidad) |
-| **Q3** populares (agregación 3×1M) | seq scan + HashAggregate | igual: debe leer todo | 🔴 casi nula → demuestra "cuándo el índice NO ayuda" |
+| Consulta | Sin índice | Con índice | Mejora | Lectura |
+|----------|-----------|-----------|--------|---------|
+| **Q3** historial usuario | 555 | 261 | **−53%** | 🟢 el mayor beneficio: index scan filtrado y ya ordenado |
+| **Q2** populares (agregación 3×) | 7 432 | 5 557 | −25% | 🟡 el índice en `Resena(material_id)` ayuda (su PK es Code); el resto debe leer todo |
+| **Q1** género + clasificación | 626 | 477 | −24% | 🟢 filtra por género y acota el rango de clasificación |
+| **Q4** usuarios por rango de años | 3 831 | 3 038 | −21% | 🟢 el `BETWEEN` sobre el año se resuelve con `idx_material_anio` |
+
+En `1k`/`10k` la diferencia es de milisegundos o nula (incluso "con índice" sale a
+veces algo más lento por ruido): PostgreSQL **ignora** el índice y hace *seq scan*
+porque recorrer una tabla pequeña es más barato. Ese *crossover* por selectividad
+entre escenarios es, en sí, un resultado a reportar.
 
 Reglas para que la medición sea honesta:
-1. El contraste se ve en **100k/1m**; en `1k`/`10k` PostgreSQL **ignora** los
-   índices (seq scan de tabla pequeña es más barato). Ese *crossover* entre
-   escenarios es en sí un resultado a reportar.
+1. El contraste se ve en **100k/1m**; en `1k`/`10k` el índice no ayuda (o estorba).
 2. **Caché:** correr cada consulta varias veces, usar `EXPLAIN (ANALYZE, BUFFERS)`
    y comparar el estado caliente; si no, la diferencia frío/caliente contamina.
-3. `05_drop_indexes.sql` borra **solo los 9 secundarios**; los índices de PK
-   permanecen. Por eso las consultas filtran por columnas que **no** son la primera
-   de ninguna PK (`autor_id`, `genero_nombre`, `username`), para que al quitar el
-   secundario realmente caigan a *seq scan*.
+3. `05_drop_indexes.sql` borra **solo los 10 secundarios**; los índices de PK
+   permanecen. Por eso el contraste más limpio aparece en columnas que **no** son la
+   primera de ninguna PK (`genero_nombre`, el camino de usuario en `Leer`,
+   `Resena.material_id` —cuya PK es `Code`—, `Material.anio_publicacion`).
 
 #### Hallazgo educativo: cuándo el índice PERJUDICA
 
@@ -178,8 +182,9 @@ Cuando el filtro abarca casi toda la tabla, recorrer el índice y saltar al heap
 (acceso aleatorio) cuesta más que un *seq scan* secuencial. **El planner tiene razón
 al ignorar el índice**; se fuerza solo para demostrarlo.
 
-> Panorama completo del experimento: el índice **ayuda** (Q1/Q4), es **indiferente**
-> (Q3, agregación total) o **perjudica** (escrituras / lectura no selectiva).
+> Panorama completo del experimento: el índice **ayuda** (Q3 historial, Q1, Q4), es
+> **casi indiferente** (Q2, agregación total) o **perjudica** (escrituras / lectura
+> no selectiva).
 
 ### C. Decisiones de realismo de los datos (faker)
 

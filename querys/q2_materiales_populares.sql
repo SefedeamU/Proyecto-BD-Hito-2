@@ -1,7 +1,10 @@
--- Q3: Materiales más populares.
--- Agrega Likes, Leer y Resena por material (cada métrica en su propia
--- subconsulta para evitar el producto cartesiano). Agregación total:
--- caso donde los índices secundarios casi no ayudan.
+-- Q2: Los 20 materiales más populares (ranking de popularidad).
+-- Agrega likes, lecturas y reseñas por material en SUBCONSULTAS
+-- independientes que luego se combinan, de modo que cada métrica se
+-- cuenta una sola vez (no se multiplican las filas entre las tres tablas).
+-- Es una agregación total: el caso donde el índice secundario ayuda poco.
+-- Índices relevantes: idx_likes_material, idx_leer_material,
+-- idx_resena_material, idx_resena_material_punt.
 SELECT
     m.Id,
     m.Alias,

@@ -9,7 +9,7 @@ con una fila por (base × consulta × condición). Columnas:
 | Columna | Descripción |
 |---------|-------------|
 | `base` | `bd_literaria_1k` / `10k` / `100k` / `1m` |
-| `consulta` | `Q1_por_autor`, `Q2_por_genero`, `Q3_populares`, `Q4_historial`, `Q5_por_rango_anio` |
+| `consulta` | `Q1_genero`, `Q2_populares`, `Q3_historial`, `Q4_usuarios` |
 | `escenario_indices` | `SIN` (sin índices secundarios) o `CON` (con índices) |
 | `tiempo_ms` | `Execution Time` reportado por `EXPLAIN ANALYZE` (en caliente) |
 | `plan_elegido` | tipo de plan: `Seq Scan`, `Index Scan`, `Bitmap Index Scan`, etc. |
@@ -30,13 +30,13 @@ DB=bd_literaria_1m   # repetir para cada base
 psql -h $HOST -p 5432 -U bd_guest -d $DB -f sql/05_drop_indexes.sql
 psql -h $HOST -p 5432 -U bd_guest -d $DB -c "ANALYZE;"
 psql -h $HOST -p 5432 -U bd_guest -d $DB -f sql/06_experiments.sql
-# -> anotar el "Execution Time" de Q1..Q5 en la columna SIN
+# -> anotar el "Execution Time" de Q1..Q4 en la columna SIN
 
 # 2) CON índices
 psql -h $HOST -p 5432 -U bd_guest -d $DB -f sql/04_indexes.sql
 psql -h $HOST -p 5432 -U bd_guest -d $DB -c "ANALYZE;"
 psql -h $HOST -p 5432 -U bd_guest -d $DB -f sql/06_experiments.sql
-# -> anotar el "Execution Time" de Q1..Q5 en la columna CON
+# -> anotar el "Execution Time" de Q1..Q4 en la columna CON
 ```
 
 > Mide siempre con el `Execution Time` del `EXPLAIN ANALYZE` (lo reporta el

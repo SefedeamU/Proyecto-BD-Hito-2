@@ -1,20 +1,18 @@
 -- =====================================================================
 -- 06_experiments.sql
--- Consultas experimentales del Hito 2 con EXPLAIN ANALYZE.
+-- Las 4 consultas experimentales del Hito 2, envueltas en
+-- EXPLAIN (ANALYZE, BUFFERS) para medir tiempos y planes. Son las mismas
+-- que están limpias (sin EXPLAIN) en la carpeta querys/.
 --
--- Estas son las mismas 4 consultas que estarán (limpias, sin EXPLAIN)
--- en la carpeta querys/. Aquí se envuelven con EXPLAIN (ANALYZE, BUFFERS)
--- para medir tiempos y planes.
---
--- METODOLOGÍA SUGERIDA:
---   1. Ejecutar ANALYZE; (actualiza estadísticas del planificador).
+-- METODOLOGÍA:
+--   1. ANALYZE; (actualiza estadísticas del planificador).
 --   2. Correr este script SIN índices (tras 05_drop_indexes.sql).
 --   3. Crear índices (04_indexes.sql), ANALYZE; y volver a correrlo.
 --   4. Comparar tiempos y planes (sin vs con índices) en cada escenario
---      (1K, 10K, 100K, 1M).
+--      (1K, 10K, 100K, 1M). Tomar la 2ª corrida (caché caliente).
 --
--- Los valores de filtro (:autor_id, :genero, :username, :email) son
--- ejemplos; reemplázalos por IDs reales existentes en cada base.
+-- Los valores de filtro ('Ficcion', 'user1', los rangos de años) son
+-- ejemplos; reemplázalos por valores existentes en cada base.
 -- =====================================================================
 
 -- Actualiza estadísticas antes de medir.
@@ -22,41 +20,26 @@ ANALYZE;
 
 
 -- ---------------------------------------------------------------------
--- CONSULTA 1: Materiales escritos por un autor.
--- Une Autor - Escribe - Material. Mide búsqueda por autor.
+-- CONSULTA 1: Materiales de un género acotados por clasificación de edad.
+-- Une Genero - Pertenece - Material - AgeRate. Combina igualdad (género)
+-- con un filtro por RANGO sobre la clasificación (code BETWEEN).
 -- ---------------------------------------------------------------------
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
-FROM Autor au
-JOIN Escribe esc ON esc.Autor_Id = au.Id
-JOIN Material m  ON m.Id = esc.Material_Id
-WHERE au.Id = 1;            -- :autor_id
-
-
--- ---------------------------------------------------------------------
--- CONSULTA 2: Materiales que pertenecen a un género.
--- Une Genero - Pertenece - Material. Mide búsqueda por categoría.
--- ---------------------------------------------------------------------
-EXPLAIN (ANALYZE, BUFFERS)
-SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
+SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma, ag.label
 FROM Genero g
 JOIN Pertenece p ON p.Genero_Nombre = g.Nombre
 JOIN Material m  ON m.Id = p.Material_Id
-WHERE g.Nombre = 'Ficcion';   -- :genero
+JOIN AgeRate ag  ON ag.code = m.agerate_code
+WHERE g.Nombre = 'Ficcion'            -- :genero
+  AND ag.code BETWEEN 2 AND 5;        -- :code_desde / :code_hasta
 
 
 -- ---------------------------------------------------------------------
--- CONSULTA 3: Materiales más populares.
--- Agrega Likes, Leer y Reseña por material. Mide agregaciones pesadas.
---
--- [Cambio J] Se reescribió para evitar el PRODUCTO CARTESIANO que tenía
--- la versión anterior (3 LEFT JOIN 1-a-muchos sobre Material generaban
--- #likes x #lecturas x #reseñas filas intermedias). Ahora cada métrica
--- se calcula en su propia subconsulta agregada y luego se combinan, que
--- es como debe medirse esta consulta para un benchmark honesto.
--- Esta consulta es el caso "el índice NO ayuda": al ser una agregación
--- total sin filtro selectivo, debe leer todas las filas de las tres
--- tablas (seq scan + agregación) con o sin índice secundario.
+-- CONSULTA 2: Los 20 materiales más populares (ranking). [Cambio J]
+-- Agrega likes, lecturas y reseñas por material en subconsultas
+-- independientes que luego se combinan, de modo que cada métrica se
+-- cuenta una sola vez (sin multiplicar filas entre las tres tablas). Es
+-- una agregación total: el caso donde el índice secundario ayuda poco.
 -- ---------------------------------------------------------------------
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT
@@ -78,9 +61,10 @@ LIMIT 20;
 
 
 -- ---------------------------------------------------------------------
--- CONSULTA 4: Historial de lectura de un usuario.
--- Une Usuario - Leer - Material filtrando por usuario y ordenando por
--- fecha descendente.
+-- CONSULTA 3: Historial de lectura de un usuario (a partir de cierto año).
+-- Une Usuario - Leer - Material filtrando por usuario y por lecturas
+-- posteriores a 2004, ordenadas por fecha descendente. El índice
+-- idx_leer_usuario filtra por usuario y entrega el ORDER BY ya resuelto.
 -- ---------------------------------------------------------------------
 EXPLAIN (ANALYZE, BUFFERS)
 SELECT m.Id, m.Alias, le.Fecha
@@ -88,22 +72,24 @@ FROM Usuario u
 JOIN Leer le    ON le.Usuario_Username = u.Username
                AND le.Usuario_Email    = u.Email
 JOIN Material m ON m.Id = le.Material_Id
-WHERE u.Username = 'user1'              -- :username
-  AND u.Email    = 'user1@mail.com'     -- :email
+WHERE u.Username = 'user1'                       -- :username
+  AND u.Email    = 'user1@mail.com'              -- :email
+  AND EXTRACT(YEAR FROM le.Fecha) > 2004         -- :anio_min
 ORDER BY le.Fecha DESC;
 
 
 -- ---------------------------------------------------------------------
--- CONSULTA 5: Materiales publicados en un RANGO de años (consulta por rango).
--- [Cambio L] Consulta agregada en el Hito 2 a pedido del profesor: al menos
--- una consulta debe filtrar por RANGO para demostrar las bondades de un
--- índice B-tree sobre predicados BETWEEN. Índice: idx_material_anio.
---   Rango selectivo (años tempranos, escasos) -> el planner usa Bitmap Index
---   Scan y gana ~52x en 1M. Para un rango amplio el planner vuelve a Seq Scan
---   a propósito (crossover por selectividad), lo cual también es un resultado.
+-- CONSULTA 4: Usuarios con reseñas destacadas por RANGO de años.
+-- Une Usuario - Resena - Material y combina un filtro por rango sobre el
+-- año de publicación (BETWEEN) con un filtro selectivo por puntaje alto.
+-- DISTINCT porque un usuario puede tener varias reseñas que califiquen.
+-- Se apoya en idx_material_anio (el rango) e idx_resena_material_punt.
 -- ---------------------------------------------------------------------
 EXPLAIN (ANALYZE, BUFFERS)
-SELECT m.Id, m.Alias, m.Anio_Publicacion, m.Idioma
-FROM Material m
-WHERE m.Anio_Publicacion BETWEEN 1900 AND 1905   -- :anio_desde / :anio_hasta
-ORDER BY m.Anio_Publicacion;
+SELECT DISTINCT u.Username, u.Email
+FROM Usuario u
+JOIN Resena r   ON r.Usuario_Username = u.Username
+               AND r.Usuario_Email    = u.Email
+JOIN Material m ON m.Id = r.Material_Id
+WHERE m.Anio_Publicacion BETWEEN 2000 AND 2005   -- :anio_desde / :anio_hasta
+  AND r.Puntaje > 8.5;                           -- :puntaje_min
