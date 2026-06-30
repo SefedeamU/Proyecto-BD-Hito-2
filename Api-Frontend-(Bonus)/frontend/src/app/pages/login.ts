@@ -9,29 +9,36 @@ import { Auth } from '../core/auth';
   imports: [FormsModule, RouterLink],
   template: `
     <div class="container narrow">
-      <div class="card-panel">
+      <form class="card-panel animate-in" (submit)="$event.preventDefault(); submit()" novalidate>
         <h1>Ingresar</h1>
         <p class="muted">Accede con tu cuenta de lector.</p>
+
+        @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+
         <div class="field">
-          <label>Usuario</label>
-          <input [(ngModel)]="username" placeholder="p. ej. user1" (keyup.enter)="submit()" />
+          <label for="u">Usuario</label>
+          <input id="u" name="username" autocomplete="username" [(ngModel)]="username"
+                 placeholder="p. ej. user1" [class.invalid]="error() && !username" />
         </div>
         <div class="field">
-          <label>Contraseña</label>
-          <input type="password" [(ngModel)]="password" (keyup.enter)="submit()" />
+          <label for="p">Contraseña</label>
+          <input id="p" name="password" type="password" autocomplete="current-password"
+                 [(ngModel)]="password" [class.invalid]="error() && !password" />
         </div>
-        @if (error()) { <p class="err">{{ error() }}</p> }
-        <button class="btn btn-mustard" style="width:100%;justify-content:center" (click)="submit()" [disabled]="loading()">
-          {{ loading() ? 'Verificando…' : 'Ingresar' }}
+
+        <button class="btn btn-mustard full" type="submit" [disabled]="loading()">
+          @if (loading()) { <span class="spinner"></span> Verificando… } @else { Ingresar }
         </button>
-        <p class="muted center" style="margin-top:16px">¿No tienes cuenta? <a routerLink="/register" class="link">Regístrate</a></p>
-      </div>
+        <p class="muted center" style="margin-top:16px">
+          ¿No tienes cuenta? <a routerLink="/register" class="link">Regístrate</a>
+        </p>
+      </form>
     </div>
   `,
   styles: [`
-    .narrow { max-width: 440px; padding-top: 50px; }
+    .narrow { max-width: 440px; padding: 50px 22px; }
     h1 { font-size: 1.8rem; margin: 0 0 4px; }
-    .err { color: var(--danger); font-size: .9rem; }
+    .full { width: 100%; justify-content: center; }
     .link { color: var(--mustard-deep); font-weight: 600; }
   `],
 })

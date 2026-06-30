@@ -1,36 +1,53 @@
+<a class="skip-link" href="#main">Saltar al contenido</a>
+
 <header class="nav">
   <div class="container nav-in">
-    <a class="logo" routerLink="/">
-      <span class="logo-mark">❦</span><span class="logo-text">Biblioteca<b>Literaria</b></span>
+    <a class="logo" routerLink="/" aria-label="Biblioteca de Alejandría — inicio">
+      <span class="logo-mark" aria-hidden="true">❦</span>
+      <span class="logo-text">Biblioteca <b>de Alejandría</b></span>
     </a>
 
-    <div class="searchbar">
+    <form class="searchbar" role="search" (submit)="$event.preventDefault(); search()">
+      <label class="sr-only" for="nav-search">Buscar materiales</label>
       <input
+        id="nav-search"
         type="search"
+        autocomplete="off"
         placeholder="Buscar materiales, alias…"
-        (input)="onInput($any($event.target).value)"
-        (keyup.enter)="search()" />
-      <button class="btn btn-mustard" (click)="search()">Buscar</button>
-    </div>
+        [value]="query()"
+        (input)="onInput($any($event.target).value)" />
+      <button class="btn btn-mustard" type="submit" aria-label="Buscar">Buscar</button>
+    </form>
 
-    <nav class="links">
-      <a routerLink="/catalog">Catálogo</a>
+    <nav class="links" aria-label="Principal">
+      <a routerLink="/catalog" routerLinkActive="active">Catálogo</a>
       @if (auth.user(); as u) {
-        <a routerLink="/profile" class="user">Hola, {{ u.nombre }}</a>
+        <a routerLink="/profile" routerLinkActive="active" class="user">Hola, {{ u.nombre }}</a>
         <button class="btn btn-ghost" (click)="logout()">Salir</button>
       } @else {
         <a routerLink="/login" class="btn btn-ghost">Ingresar</a>
       }
     </nav>
   </div>
+
+  <form class="searchbar mobile" role="search" (submit)="$event.preventDefault(); search()">
+    <label class="sr-only" for="nav-search-m">Buscar materiales</label>
+    <input
+      id="nav-search-m"
+      type="search"
+      placeholder="Buscar materiales…"
+      [value]="query()"
+      (input)="onInput($any($event.target).value)" />
+    <button class="btn btn-mustard" type="submit" aria-label="Buscar">🔍</button>
+  </form>
 </header>
 
-<main>
+<main id="main">
   <router-outlet />
 </main>
 
 <footer class="foot">
   <div class="container">
-    Biblioteca Literaria · Proyecto Base de Datos I — Hito 2 · datos servidos desde PostgreSQL
+    <b>Biblioteca de Alejandría</b> · Proyecto Base de Datos I — Hito 2 · datos servidos desde PostgreSQL
   </div>
 </footer>

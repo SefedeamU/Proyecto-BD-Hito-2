@@ -9,38 +9,66 @@ import { Auth } from '../core/auth';
   imports: [FormsModule, RouterLink],
   template: `
     <div class="container narrow">
-      <div class="card-panel">
+      <form class="card-panel animate-in" (submit)="$event.preventDefault(); submit()" novalidate>
         <h1>Crear cuenta</h1>
         <p class="muted">Únete a la comunidad de lectores.</p>
+
+        @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+
         <div class="two">
-          <div class="field"><label>Nombre</label><input [(ngModel)]="f.nombre" /></div>
-          <div class="field"><label>Apellido</label><input [(ngModel)]="f.apellido" /></div>
+          <div class="field">
+            <label for="nombre">Nombre</label>
+            <input id="nombre" name="nombre" autocomplete="given-name" [(ngModel)]="f.nombre" />
+          </div>
+          <div class="field">
+            <label for="apellido">Apellido</label>
+            <input id="apellido" name="apellido" autocomplete="family-name" [(ngModel)]="f.apellido" />
+          </div>
         </div>
-        <div class="field"><label>Usuario</label><input [(ngModel)]="f.username" /></div>
-        <div class="field"><label>Email</label><input type="email" [(ngModel)]="f.email" /></div>
         <div class="field">
-          <label>Contraseña (exactamente 12 caracteres)</label>
-          <input type="password" [(ngModel)]="f.password" maxlength="12" />
-          <small class="muted">{{ f.password.length }}/12</small>
+          <label for="usuario">Usuario</label>
+          <input id="usuario" name="username" autocomplete="username" [(ngModel)]="f.username" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" autocomplete="email" [(ngModel)]="f.email" />
+        </div>
+        <div class="field">
+          <label for="pass">Contraseña</label>
+          <input id="pass" name="password" type="password" autocomplete="new-password" maxlength="12"
+                 [(ngModel)]="f.password" [class.invalid]="f.password.length > 0 && f.password.length !== 12"
+                 [attr.aria-describedby]="'passhint'" />
+          <span id="passhint" class="hint" [class.ok]="f.password.length === 12">
+            {{ f.password.length }}/12 caracteres (exactamente 12)
+          </span>
         </div>
         <div class="two">
-          <div class="field"><label>Edad</label><input type="number" min="12" [(ngModel)]="f.edad" /></div>
-          <div class="field"><label>Ciudad</label><input [(ngModel)]="f.ciudad" /></div>
+          <div class="field">
+            <label for="edad">Edad</label>
+            <input id="edad" name="edad" type="number" min="12" inputmode="numeric" [(ngModel)]="f.edad" />
+          </div>
+          <div class="field">
+            <label for="ciudad">Ciudad</label>
+            <input id="ciudad" name="ciudad" autocomplete="address-level2" [(ngModel)]="f.ciudad" />
+          </div>
         </div>
-        @if (error()) { <p class="err">{{ error() }}</p> }
-        <button class="btn btn-mustard" style="width:100%;justify-content:center" (click)="submit()" [disabled]="loading()">
-          {{ loading() ? 'Creando…' : 'Crear cuenta' }}
+
+        <button class="btn btn-mustard full" type="submit" [disabled]="loading()">
+          @if (loading()) { <span class="spinner"></span> Creando… } @else { Crear cuenta }
         </button>
-        <p class="muted center" style="margin-top:16px">¿Ya tienes cuenta? <a routerLink="/login" class="link">Ingresa</a></p>
-      </div>
+        <p class="muted center" style="margin-top:16px">
+          ¿Ya tienes cuenta? <a routerLink="/login" class="link">Ingresa</a>
+        </p>
+      </form>
     </div>
   `,
   styles: [`
-    .narrow { max-width: 480px; padding-top: 40px; }
+    .narrow { max-width: 480px; padding: 40px 22px; }
     h1 { font-size: 1.8rem; margin: 0 0 4px; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .err { color: var(--danger); font-size: .9rem; }
+    .full { width: 100%; justify-content: center; }
     .link { color: var(--mustard-deep); font-weight: 600; }
+    @media (max-width: 460px) { .two { grid-template-columns: 1fr; gap: 0; } }
   `],
 })
 export class Register {
@@ -52,8 +80,8 @@ export class Register {
   loading = signal(false);
 
   submit(): void {
+    if (!this.f.username || !this.f.email || !this.f.nombre) { this.error.set('Completa nombre, usuario y email'); return; }
     if (this.f.password.length !== 12) { this.error.set('La contraseña debe tener exactamente 12 caracteres'); return; }
-    if (!this.f.username || !this.f.email || !this.f.nombre) { this.error.set('Completa los campos requeridos'); return; }
     this.loading.set(true);
     this.error.set('');
     this.api.register(this.f).subscribe({
