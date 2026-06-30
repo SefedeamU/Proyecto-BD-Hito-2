@@ -1865,6 +1865,18 @@ Con índices, el acceso a \texttt{pertenece} pasa a usar
   \label{fig:planq1}
 \end{figure}
 
+El desglose de nodos (Figura~\ref{fig:anaq1}) confirma el cambio: sin índices
+aparecen \texttt{Seq Scan} sobre las tres tablas; con índices, el acceso a
+\texttt{pertenece} se hace por \texttt{idx\_pertenece\_genero}.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/analisis_q1_1m_sin.png}{\includegraphics[width=\textwidth]{img/analisis_q1_1m_sin.png}}{}
+  \IfFileExists{img/analisis_q1_1m_con.png}{\includegraphics[width=\textwidth]{img/analisis_q1_1m_con.png}}{}
+  \caption{Q1 en \texttt{bd\_literaria\_1m}: análisis de nodos sin índices (arriba) vs.\ con índices (abajo).}
+  \label{fig:anaq1}
+\end{figure}
+
 \subsubsection{Plan de Consulta 2 (Q2 --- populares)}
 
 La Figura~\ref{fig:planq2} muestra que el plan apenas cambia: por ser una
@@ -1880,6 +1892,18 @@ secundario. La mejora (7432 a 5557~ms, $-25\%$) proviene principalmente del
   \IfFileExists{img/plan_q2_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q2_1m_con.png}}{}
   \caption{Q2 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba) vs.\ con índices (abajo). La estructura de agregación total se mantiene.}
   \label{fig:planq2}
+\end{figure}
+
+El desglose de nodos (Figura~\ref{fig:anaq2}) muestra que el índice solo
+sustituye el \texttt{Seq Scan} sobre \texttt{resena} por un acceso a
+\texttt{idx\_resena\_material}; las demás tablas se siguen agregando completas.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/analisis_q2_1m_sin.png}{\includegraphics[width=\textwidth]{img/analisis_q2_1m_sin.png}}{}
+  \IfFileExists{img/analisis_q2_1m_con.png}{\includegraphics[width=\textwidth]{img/analisis_q2_1m_con.png}}{}
+  \caption{Q2 en \texttt{bd\_literaria\_1m}: análisis de nodos sin índices (arriba) vs.\ con índices (abajo).}
+  \label{fig:anaq2}
 \end{figure}
 
 \subsubsection{Plan de Consulta 3 (Q3 --- historial)}
@@ -1898,6 +1922,19 @@ sin \texttt{Sort}. El tiempo cae de 555 a 261~ms ($-53\%$).
   \label{fig:planq3}
 \end{figure}
 
+El desglose de nodos (Figura~\ref{fig:anaq3}) lo confirma: con índices aparece
+\texttt{Index Scan using idx\_leer\_usuario} con su \texttt{Index Cond} por
+usuario y el \texttt{Filter} por año, eliminando el \texttt{Seq Scan} y el
+\texttt{Sort} del escenario sin índices.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/analisis_q3_1m_sin.png}{\includegraphics[width=\textwidth]{img/analisis_q3_1m_sin.png}}{}
+  \IfFileExists{img/analisis_q3_1m_con.png}{\includegraphics[width=\textwidth]{img/analisis_q3_1m_con.png}}{}
+  \caption{Q3 en \texttt{bd\_literaria\_1m}: análisis de nodos sin índices (arriba) vs.\ con índices (abajo, \texttt{Index Scan using idx\_leer\_usuario}).}
+  \label{fig:anaq3}
+\end{figure}
+
 \subsubsection{Plan de Consulta 4 (Q4 --- usuarios por rango de años)}
 
 La Figura~\ref{fig:planq4} compara el plan en 1M. Con índices, el predicado
@@ -1911,6 +1948,18 @@ filtro por puntaje con \texttt{idx\_resena\_material\_punt}, bajando de 3831 a
   \IfFileExists{img/plan_q4_1m_con.png}{\includegraphics[width=\textwidth]{img/plan_q4_1m_con.png}}{}
   \caption{Q4 en \texttt{bd\_literaria\_1m}: plan sin índices (arriba) vs.\ con índices (abajo, \texttt{idx\_material\_anio} para el rango de años).}
   \label{fig:planq4}
+\end{figure}
+
+El desglose de nodos (Figura~\ref{fig:anaq4}) muestra el \texttt{Bitmap Index
+Scan} sobre \texttt{idx\_material\_anio} que materializa solo el tramo del rango,
+en lugar del \texttt{Seq Scan} completo del escenario sin índices.
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{img/analisis_q4_1m_sin.png}{\includegraphics[width=\textwidth]{img/analisis_q4_1m_sin.png}}{}
+  \IfFileExists{img/analisis_q4_1m_con.png}{\includegraphics[width=\textwidth]{img/analisis_q4_1m_con.png}}{}
+  \caption{Q4 en \texttt{bd\_literaria\_1m}: análisis de nodos sin índices (arriba) vs.\ con índices (abajo, \texttt{idx\_material\_anio}).}
+  \label{fig:anaq4}
 \end{figure}
 
 
