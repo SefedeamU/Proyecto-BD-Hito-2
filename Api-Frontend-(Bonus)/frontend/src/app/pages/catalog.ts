@@ -76,12 +76,19 @@ function emptyFilters(): Filters {
                 @for (x of opts()?.paises; track x) { <option [value]="x">{{ x }}</option> }
               </select></div>
             <div class="pair">
-              <div class="f"><label>Año desde</label><input type="number" [(ngModel)]="f.anio_min" placeholder="1900" /></div>
-              <div class="f"><label>Año hasta</label><input type="number" [(ngModel)]="f.anio_max" placeholder="2024" /></div>
+              <div class="f"><label>Año desde</label>
+                <select [(ngModel)]="f.anio_min"><option [ngValue]="null">Cualquiera</option>
+                  @for (y of decadas; track y) { <option [ngValue]="y">{{ y }}</option> }</select></div>
+              <div class="f"><label>Año hasta</label>
+                <select [(ngModel)]="f.anio_max"><option [ngValue]="null">Cualquiera</option>
+                  @for (y of decadas; track y) { <option [ngValue]="y">{{ y }}</option> }</select></div>
             </div>
             <div class="pair">
-              <div class="f"><label>Págs. mín.</label><input type="number" [(ngModel)]="f.paginas_min" /></div>
-              <div class="f"><label>Págs. máx.</label><input type="number" [(ngModel)]="f.paginas_max" /></div>
+              <div class="f"><label>Págs. mín.</label>
+                <input type="number" min="0" inputmode="numeric" placeholder="Ej: 100" [(ngModel)]="f.paginas_min" />
+                <span class="hint">entero de páginas</span></div>
+              <div class="f"><label>Págs. máx.</label>
+                <input type="number" min="0" inputmode="numeric" placeholder="Ej: 800" [(ngModel)]="f.paginas_max" /></div>
             </div>
           </fieldset>
 
@@ -91,8 +98,12 @@ function emptyFilters(): Filters {
               <select [(ngModel)]="f.editorial_pais"><option value="">Cualquiera</option>
                 @for (x of opts()?.editorial_paises; track x) { <option [value]="x">{{ x }}</option> }</select></div>
             <div class="pair">
-              <div class="f"><label>Fundada desde</label><input type="number" [(ngModel)]="f.fundacion_min" /></div>
-              <div class="f"><label>Fundada hasta</label><input type="number" [(ngModel)]="f.fundacion_max" /></div>
+              <div class="f"><label>Fundada desde</label>
+                <select [(ngModel)]="f.fundacion_min"><option [ngValue]="null">Cualquiera</option>
+                  @for (y of decadas; track y) { <option [ngValue]="y">{{ y }}</option> }</select></div>
+              <div class="f"><label>Fundada hasta</label>
+                <select [(ngModel)]="f.fundacion_max"><option [ngValue]="null">Cualquiera</option>
+                  @for (y of decadas; track y) { <option [ngValue]="y">{{ y }}</option> }</select></div>
             </div>
           </fieldset>
 
@@ -102,8 +113,14 @@ function emptyFilters(): Filters {
               <select [(ngModel)]="f.agerate"><option value="">Cualquiera</option>
                 @for (x of opts()?.agerates; track x) { <option [value]="x">{{ x }}</option> }</select></div>
             <div class="pair">
-              <div class="f"><label>Violencia ≤</label><input type="number" min="0" [(ngModel)]="f.violencia_max" /></div>
-              <div class="f"><label>Sexualidad ≤</label><input type="number" min="0" [(ngModel)]="f.sexualidad_max" /></div>
+              <div class="f"><label>Violencia máx.</label>
+                <select [(ngModel)]="f.violencia_max"><option [ngValue]="null">Cualquiera</option>
+                  @for (n of niveles10; track n) { <option [ngValue]="n">{{ n }}</option> }</select>
+                <span class="hint">escala 1–10</span></div>
+              <div class="f"><label>Sexualidad máx.</label>
+                <select [(ngModel)]="f.sexualidad_max"><option [ngValue]="null">Cualquiera</option>
+                  @for (n of niveles10; track n) { <option [ngValue]="n">{{ n }}</option> }</select>
+                <span class="hint">escala 1–10</span></div>
             </div>
           </fieldset>
 
@@ -133,7 +150,10 @@ function emptyFilters(): Filters {
             <div class="f"><label>Categoría del premio</label>
               <select [(ngModel)]="f.premio_categoria"><option value="">Cualquiera</option>
                 @for (x of opts()?.premio_categorias; track x) { <option [value]="x">{{ x }}</option> }</select></div>
-            <div class="f"><label>Relevancia mínima</label><input type="number" [(ngModel)]="f.relevancia_min" /></div>
+            <div class="f"><label>Relevancia mínima del premio</label>
+              <select [(ngModel)]="f.relevancia_min"><option [ngValue]="null">Cualquiera</option>
+                @for (n of niveles5; track n) { <option [ngValue]="n">{{ n }}</option> }</select>
+              <span class="hint">escala 1–5 (5 = más prestigioso)</span></div>
           </fieldset>
 
           <fieldset>
@@ -148,15 +168,24 @@ function emptyFilters(): Filters {
           <fieldset>
             <legend>Métricas de interacción</legend>
             <div class="pair">
-              <div class="f"><label>Mín. likes</label><input type="number" [(ngModel)]="f.min_likes" /></div>
-              <div class="f"><label>Mín. lecturas</label><input type="number" [(ngModel)]="f.min_lecturas" /></div>
+              <div class="f"><label>Mín. likes</label>
+                <input type="number" min="0" inputmode="numeric" placeholder="Ej: 50" [(ngModel)]="f.min_likes" /></div>
+              <div class="f"><label>Mín. lecturas</label>
+                <input type="number" min="0" inputmode="numeric" placeholder="Ej: 50" [(ngModel)]="f.min_lecturas" /></div>
             </div>
-            <div class="f"><label>Mín. reseñas</label><input type="number" [(ngModel)]="f.min_resenas" /></div>
+            <div class="f"><label>Mín. reseñas</label>
+              <input type="number" min="0" inputmode="numeric" placeholder="Ej: 10" [(ngModel)]="f.min_resenas" />
+              <span class="hint">entero ≥ 0</span></div>
             <div class="pair">
-              <div class="f"><label>Puntaje ≥</label><input type="number" step="0.1" min="0" max="10" [(ngModel)]="f.puntaje_min" /></div>
-              <div class="f"><label>Puntaje ≤</label><input type="number" step="0.1" min="0" max="10" [(ngModel)]="f.puntaje_max" /></div>
+              <div class="f"><label>Puntaje ≥</label>
+                <input type="number" step="0.1" min="0" max="10" inputmode="decimal" placeholder="Ej: 8.5" [(ngModel)]="f.puntaje_min" />
+                <span class="hint">0–10, un decimal</span></div>
+              <div class="f"><label>Puntaje ≤</label>
+                <input type="number" step="0.1" min="0" max="10" inputmode="decimal" placeholder="Ej: 10" [(ngModel)]="f.puntaje_max" /></div>
             </div>
-            <div class="f"><label>Mín. de autores</label><input type="number" [(ngModel)]="f.min_autores" /></div>
+            <div class="f"><label>Mín. de autores</label>
+              <select [(ngModel)]="f.min_autores"><option [ngValue]="null">Cualquiera</option>
+                @for (n of autoresOpts; track n) { <option [ngValue]="n">{{ n }}</option> }</select></div>
             <label class="check"><input type="checkbox" [(ngModel)]="f.multi_autor" /> Más de un autor</label>
             <label class="check"><input type="checkbox" [(ngModel)]="f.con_resenas" /> Con al menos una reseña</label>
           </fieldset>
@@ -237,6 +266,7 @@ function emptyFilters(): Filters {
     .f { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
     .f.inline { flex-direction: row; align-items: center; gap: 8px; margin: 0; }
     .f label { font-size: .78rem; font-weight: 600; color: var(--muted); }
+    .f .hint { font-size: .7rem; color: var(--muted); margin-top: 2px; }
     .f input, .f select { width: 100%; min-width: 0; min-height: 40px; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--surface); font-size: .88rem; color: var(--ink); font-family: inherit; }
     .f input:focus, .f select:focus { outline: none; border-color: var(--mustard); box-shadow: 0 0 0 3px var(--mustard-soft); }
     .f.inline select { width: auto; }
@@ -272,6 +302,12 @@ export class Catalog {
   private route = inject(ActivatedRoute);
   sk = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
   tipos = ['Libro', 'Ensayo', 'Revista', 'Poema', 'AudioBook']; // dominio fijo (CHECK)
+  // Dominios ACOTADOS por el esquema -> se eligen de una lista (no texto libre):
+  niveles10 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]; // Violence/Sexuality: CHECK 1..10
+  niveles5 = [1, 2, 3, 4, 5];                   // Premio.Relevancia: CHECK 1..5
+  autoresOpts = [1, 2, 3, 4, 5];               // mín. de autores por material
+  // Años como décadas (los datos van de 1900 a ~2024): elegible, no a mano.
+  decadas = [1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
   opts = signal<Options | null>(null);
   items = signal<SearchResult[]>([]);
   loading = signal(true);
