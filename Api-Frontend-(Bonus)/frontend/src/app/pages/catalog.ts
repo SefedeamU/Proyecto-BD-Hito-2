@@ -12,12 +12,12 @@ const PAGE = 24;
 interface Filters {
   tipo: string; idioma: string; pais: string;
   anio_min: number | null; anio_max: number | null; paginas_min: number | null; paginas_max: number | null;
-  editorial: string; editorial_pais: string; fundacion_min: number | null; fundacion_max: number | null;
+  editorial_pais: string; fundacion_min: number | null; fundacion_max: number | null;
   agerate: string; violencia_max: number | null; sexualidad_max: number | null;
   genero: string; subgenero: string;
-  autor: string; autor_pais: string;
+  autor_pais: string;
   con_premio: boolean; premio: string; premio_categoria: string; relevancia_min: number | null;
-  con_ilustraciones: boolean; tipo_arte: string; artista: string; con_curiosidades: boolean;
+  con_ilustraciones: boolean; tipo_arte: string; con_curiosidades: boolean;
   min_likes: number | null; min_lecturas: number | null; min_resenas: number | null;
   puntaje_min: number | null; puntaje_max: number | null; min_autores: number | null;
   multi_autor: boolean; con_resenas: boolean;
@@ -28,12 +28,12 @@ function emptyFilters(): Filters {
   return {
     tipo: '', idioma: '', pais: '',
     anio_min: null, anio_max: null, paginas_min: null, paginas_max: null,
-    editorial: '', editorial_pais: '', fundacion_min: null, fundacion_max: null,
+    editorial_pais: '', fundacion_min: null, fundacion_max: null,
     agerate: '', violencia_max: null, sexualidad_max: null,
     genero: '', subgenero: '',
-    autor: '', autor_pais: '',
+    autor_pais: '',
     con_premio: false, premio: '', premio_categoria: '', relevancia_min: null,
-    con_ilustraciones: false, tipo_arte: '', artista: '', con_curiosidades: false,
+    con_ilustraciones: false, tipo_arte: '', con_curiosidades: false,
     min_likes: null, min_lecturas: null, min_resenas: null,
     puntaje_min: null, puntaje_max: null, min_autores: null,
     multi_autor: false, con_resenas: false,
@@ -87,7 +87,6 @@ function emptyFilters(): Filters {
 
           <fieldset>
             <legend>Editorial</legend>
-            <div class="f"><label>Nombre contiene</label><input [(ngModel)]="f.editorial" placeholder="p. ej. Miller" /></div>
             <div class="f"><label>País de la editorial</label>
               <select [(ngModel)]="f.editorial_pais"><option value="">Cualquiera</option>
                 @for (x of opts()?.editorial_paises; track x) { <option [value]="x">{{ x }}</option> }</select></div>
@@ -120,7 +119,6 @@ function emptyFilters(): Filters {
 
           <fieldset>
             <legend>Autores</legend>
-            <div class="f"><label>Nombre/apellido contiene</label><input [(ngModel)]="f.autor" placeholder="p. ej. Garcia" /></div>
             <div class="f"><label>País del autor</label>
               <select [(ngModel)]="f.autor_pais"><option value="">Cualquiera</option>
                 @for (x of opts()?.autor_paises; track x) { <option [value]="x">{{ x }}</option> }</select></div>
@@ -144,7 +142,6 @@ function emptyFilters(): Filters {
             <div class="f"><label>Tipo de arte</label>
               <select [(ngModel)]="f.tipo_arte"><option value="">Cualquiera</option>
                 @for (x of opts()?.tipos_arte; track x) { <option [value]="x">{{ x }}</option> }</select></div>
-            <div class="f"><label>Artista contiene</label><input [(ngModel)]="f.artista" /></div>
             <label class="check"><input type="checkbox" [(ngModel)]="f.con_curiosidades" /> Con curiosidades</label>
           </fieldset>
 

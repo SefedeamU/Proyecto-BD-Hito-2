@@ -109,5 +109,13 @@
   .logo-text b { display: inline; }
   .logo-mark { font-size: 1.4rem; }
   .db-select, .idx-toggle, .perf { font-size: .78rem; }
-  .perf { display: none; } /* sin espacio para el cronómetro en pantallas muy chicas */
+  /* El cronómetro es la métrica clave del demo: SIEMPRE visible en móvil.
+     Compacto (solo ⏱️ + promedio) y con acento para que resalte. */
+  .perf { padding: 4px 10px; border-color: var(--mustard); background: var(--mustard-soft); }
+  .perf-avg { color: var(--mustard-deep); }
+}
+/* En pantallas muy angostas el cronómetro toma su propia fila completa para no
+   competir por espacio con el selector y el toggle. */
+@media (max-width: 380px) {
+  .perf { flex-basis: 100%; justify-content: center; }
 }

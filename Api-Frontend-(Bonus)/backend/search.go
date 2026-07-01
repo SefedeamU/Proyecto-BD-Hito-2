@@ -16,9 +16,10 @@ type SearchResult struct {
 	NumAutores    int      `json:"num_autores"`
 }
 
-// SearchParams: TODOS los parámetros de búsqueda posibles sobre el modelo.
-// (Sin búsqueda por texto/título: los alias del faker son genéricos y no
-// producen resultados interesantes; el valor está en los filtros estructurales.)
+// SearchParams: parámetros de búsqueda sobre el modelo. Solo filtros que la BD
+// resuelve con índices: IGUALDAD (=), RANGO (>=,<=) y EXISTS. Se excluyó a
+// propósito toda búsqueda por subcadena (ILIKE '%...%'), que no es sargable y
+// no aprovecha un B-tree; el buscador refleja lo que la BD indexa bien.
 type SearchParams struct {
 	// --- atributos directos de Material ---
 	Tipo    string // Libro/Ensayo/Revista/Poema/AudioBook
@@ -27,7 +28,6 @@ type SearchParams struct {
 	AnioMin, AnioMax       *int // rango de año de publicación (BETWEEN)
 	PaginasMin, PaginasMax *int // rango de páginas
 	// --- editorial ---
-	Editorial      string // nombre (ILIKE)
 	EditorialPais  string
 	FundacionMin, FundacionMax *int // año de fundación de la editorial (rango)
 	// --- clasificación de edad (AgeRate) ---
@@ -38,8 +38,7 @@ type SearchParams struct {
 	Genero    string
 	SubGenero string
 	// --- autores ---
-	Autor     string // nombre o apellido (ILIKE)
-	AutorID   *int
+	AutorID   *int // igualdad por id de autor (usa idx_escribe_autor)
 	AutorPais string
 	// --- premios ---
 	ConPremio        bool
@@ -49,7 +48,6 @@ type SearchParams struct {
 	// --- ilustraciones / curiosidades ---
 	ConIlustraciones bool
 	TipoArte         string
-	Artista          string
 	ConCuriosidades  bool
 	// --- métricas (agregados, estilo HAVING) ---
 	MinLikes, MinLecturas, MinResenas *int
@@ -115,9 +113,6 @@ func (s *Store) Search(ctx context.Context, p SearchParams) ([]SearchResult, err
 	}
 
 	// ----- editorial -----
-	if p.Editorial != "" {
-		b.add("e.nombre ILIKE $%d", "%"+p.Editorial+"%")
-	}
 	if p.EditorialPais != "" {
 		b.add("e.pais = $%d", p.EditorialPais)
 	}
@@ -148,9 +143,6 @@ func (s *Store) Search(ctx context.Context, p SearchParams) ([]SearchResult, err
 	}
 
 	// ----- autores (EXISTS sobre Escribe -> Autor) -----
-	if p.Autor != "" {
-		b.add("EXISTS (SELECT 1 FROM escribe es JOIN autor au ON au.id = es.autor_id WHERE es.material_id = m.id AND (au.nombre ILIKE $%[1]d OR au.apellido ILIKE $%[1]d))", "%"+p.Autor+"%")
-	}
 	if p.AutorID != nil {
 		b.add("EXISTS (SELECT 1 FROM escribe es WHERE es.material_id = m.id AND es.autor_id = $%d)", *p.AutorID)
 	}
@@ -178,9 +170,6 @@ func (s *Store) Search(ctx context.Context, p SearchParams) ([]SearchResult, err
 	}
 	if p.TipoArte != "" {
 		b.add("EXISTS (SELECT 1 FROM contiene co JOIN ilustracion il ON il.code = co.ilustracion_code WHERE co.material_id = m.id AND il.tipodearte = $%d)", p.TipoArte)
-	}
-	if p.Artista != "" {
-		b.add("EXISTS (SELECT 1 FROM contiene co JOIN ilustracion il ON il.code = co.ilustracion_code WHERE co.material_id = m.id AND il.artista ILIKE $%d)", "%"+p.Artista+"%")
 	}
 	if p.ConCuriosidades {
 		b.conds = append(b.conds, "EXISTS (SELECT 1 FROM tiene tc WHERE tc.material_id = m.id)")
