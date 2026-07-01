@@ -63,8 +63,8 @@ import { Auth } from '../core/auth';
     </div>
   `,
   styles: [`
-    .narrow { max-width: 480px; padding: 40px 22px; }
-    h1 { font-size: 1.8rem; margin: 0 0 4px; }
+    .narrow { max-width: 480px; padding: clamp(28px, 6vw, 40px) clamp(14px, 4vw, 22px); }
+    h1 { font-size: clamp(1.5rem, 5vw, 1.8rem); margin: 0 0 4px; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .full { width: 100%; justify-content: center; }
     .link { color: var(--mustard-deep); font-weight: 600; }

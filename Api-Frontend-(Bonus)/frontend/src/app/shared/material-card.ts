@@ -26,7 +26,7 @@ import { Material } from '../core/models';
     </a>
   `,
   styles: [`
-    .card { width: 188px; max-width: 100%; display: block; cursor: pointer; }
+    .card { width: clamp(150px, 42vw, 188px); max-width: 100%; display: block; cursor: pointer; }
     .cover {
       position: relative; aspect-ratio: 2/3; border-radius: 12px; overflow: hidden;
       background: var(--surface-alt); box-shadow: var(--shadow);

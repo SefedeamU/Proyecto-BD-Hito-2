@@ -87,7 +87,7 @@
 @media (max-width: 820px) {
   .nav-in .searchbar { display: none; }
   .searchbar.mobile {
-    display: flex; padding: 0 22px 12px; max-width: none;
+    display: flex; padding: 0 clamp(14px, 4vw, 22px) 12px; max-width: none;
   }
   .logo-text { font-size: 1.05rem; }
   .links { gap: 10px; }
@@ -95,8 +95,19 @@
   .links .user { display: inline; }
   .perf-meta { display: none; } /* en móvil solo el promedio */
 }
+/* Con el selector de base + toggle de índices + cronómetro, la barra ya no cabe
+   en una sola fila en teléfonos: la dejamos envolver en dos filas. */
+@media (max-width: 640px) {
+  .nav-in { flex-wrap: wrap; height: auto; padding: 9px 0; row-gap: 9px; column-gap: 10px; }
+  .logo { order: 0; }
+  .links { order: 1; margin-left: auto; }
+  .db-select { order: 2; margin-left: 0; }
+  .idx-toggle { order: 3; }
+  .perf { order: 4; margin-left: auto; }
+}
 @media (max-width: 480px) {
-  .nav-in { gap: 12px; height: 60px; }
   .logo-text b { display: inline; }
+  .logo-mark { font-size: 1.4rem; }
+  .db-select, .idx-toggle, .perf { font-size: .78rem; }
   .perf { display: none; } /* sin espacio para el cronómetro en pantallas muy chicas */
 }

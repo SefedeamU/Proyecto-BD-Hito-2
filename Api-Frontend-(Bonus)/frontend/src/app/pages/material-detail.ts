@@ -115,7 +115,7 @@ import { MaterialDetalle, Resena } from '../core/models';
     @if (toast()) { <div class="toast" role="status">{{ toast() }}</div> }
   `,
   styles: [`
-    .detail { display: grid; grid-template-columns: 360px 1fr; gap: 44px; padding: 36px 22px; align-items: start; }
+    .detail { display: grid; grid-template-columns: 360px 1fr; gap: clamp(24px, 4vw, 44px); padding: clamp(24px, 4vw, 36px) clamp(14px, 4vw, 22px); align-items: start; }
     .main img { width: 100%; aspect-ratio: 2/3; object-fit: cover; border-radius: 16px; box-shadow: var(--shadow-lg); background: var(--surface-alt); }
     .thumbs { display: flex; gap: 10px; margin-top: 12px; }
     .thumb { padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; background: none; opacity: .65; transition: all var(--t-fast); }
@@ -139,7 +139,12 @@ import { MaterialDetalle, Resena } from '../core/models';
     .score { color: var(--mustard-deep); font-weight: 700; }
     .date { font-size: .85rem; margin-left: auto; }
     .link { color: var(--mustard-deep); font-weight: 600; }
-    @media (max-width: 760px) { .detail { grid-template-columns: 1fr; gap: 24px; } }
+    @media (max-width: 760px) {
+      .detail { grid-template-columns: 1fr; gap: 24px; }
+      .gallery { max-width: 300px; margin: 0 auto; width: 100%; }
+      .metrics { gap: 16px 22px; justify-content: space-between; }
+      .metrics b { font-size: 1.3rem; }
+    }
   `],
 })
 export class MaterialDetail {

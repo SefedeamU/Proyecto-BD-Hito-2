@@ -60,8 +60,8 @@ import { HistorialItem } from '../core/models';
       width: 64px; height: 64px; border-radius: 50%; background: var(--mustard);
       color: #fff; display: grid; place-items: center; font-size: 1.4rem; font-weight: 700; flex-shrink: 0;
     }
-    h1 { font-size: 1.8rem; margin: 0; }
-    h2 { font-size: 1.4rem; margin: 26px 0 4px; }
+    h1 { font-size: clamp(1.45rem, 5vw, 1.8rem); margin: 0; }
+    h2 { font-size: clamp(1.2rem, 4vw, 1.4rem); margin: 26px 0 4px; }
     .hist { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
     .row {
       display: flex; align-items: center; gap: 16px; padding: 10px; border: 1px solid var(--line);

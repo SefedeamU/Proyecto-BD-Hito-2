@@ -36,8 +36,8 @@ import { Auth } from '../core/auth';
     </div>
   `,
   styles: [`
-    .narrow { max-width: 440px; padding: 50px 22px; }
-    h1 { font-size: 1.8rem; margin: 0 0 4px; }
+    .narrow { max-width: 440px; padding: clamp(32px, 7vw, 50px) clamp(14px, 4vw, 22px); }
+    h1 { font-size: clamp(1.5rem, 5vw, 1.8rem); margin: 0 0 4px; }
     .full { width: 100%; justify-content: center; }
     .link { color: var(--mustard-deep); font-weight: 600; }
   `],

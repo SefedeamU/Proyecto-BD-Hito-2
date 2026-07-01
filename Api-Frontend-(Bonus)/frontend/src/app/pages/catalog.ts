@@ -259,6 +259,15 @@ function emptyFilters(): Filters {
       .filters { position: static; max-height: none; display: none; }
       .filters.open { display: flex; }
     }
+    @media (max-width: 560px) {
+      .page-head { flex-direction: column; align-items: stretch; }
+      .toggle { align-self: flex-start; }
+    }
+    /* Campos de filtro más altos para el dedo en pantallas táctiles */
+    @media (any-pointer: coarse) {
+      .f input, .f select { min-height: 46px; }
+      .check input { width: 22px; height: 22px; }
+    }
   `],
 })
 export class Catalog {

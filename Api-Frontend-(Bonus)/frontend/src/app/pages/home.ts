@@ -70,22 +70,23 @@ interface Row { genero: string; items: Material[]; }
   `,
   styles: [`
     .hero { background: linear-gradient(120deg, var(--mustard-soft), var(--bg)); border-bottom: 1px solid var(--line); }
-    .hero-in { display: flex; align-items: center; justify-content: space-between; gap: 40px; padding: 56px 22px; flex-wrap: wrap; }
+    .hero-in { display: flex; align-items: center; justify-content: space-between; gap: clamp(24px, 5vw, 40px); padding: clamp(32px, 6vw, 56px) clamp(14px, 4vw, 22px); flex-wrap: wrap; }
     .hero-copy { max-width: 560px; }
     .kicker { color: var(--mustard-deep); font-weight: 600; font-size: .85rem; letter-spacing: .04em; text-transform: uppercase; }
-    .hero h1 { font-size: clamp(2rem, 5vw, 2.9rem); margin: 12px 0 14px; line-height: 1.08; }
+    .hero h1 { font-size: clamp(1.9rem, 6vw, 2.9rem); margin: 12px 0 14px; line-height: 1.08; }
     .hero h1 em { color: var(--mustard-deep); font-style: italic; }
-    .hero p { color: var(--muted); font-size: 1.08rem; margin-bottom: 22px; max-width: 460px; }
-    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+    .hero p { color: var(--muted); font-size: clamp(.98rem, 2.6vw, 1.08rem); margin-bottom: 22px; max-width: 460px; }
+    .stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(10px, 2.5vw, 14px); flex: 1 1 260px; }
     .stat {
       background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
-      padding: 18px 24px; text-align: center; box-shadow: var(--shadow); min-width: 130px;
+      padding: clamp(14px, 3vw, 18px) clamp(12px, 3vw, 24px); text-align: center; box-shadow: var(--shadow); min-width: 0;
     }
-    .stat b { display: block; font-size: 1.7rem; color: var(--mustard-deep); font-family: 'Georgia', serif; }
+    .stat b { display: block; font-size: clamp(1.35rem, 5vw, 1.7rem); color: var(--mustard-deep); font-family: 'Georgia', serif; }
     .stat span { font-size: .82rem; color: var(--muted); }
+    .hero-copy .btn { max-width: 100%; }
     @media (max-width: 520px) {
-      .hero-in { padding: 36px 22px; }
-      .stats { grid-template-columns: repeat(2, 1fr); width: 100%; }
+      .hero-copy { max-width: 100%; }
+      .hero p { max-width: 100%; }
     }
   `],
 })
