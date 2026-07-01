@@ -13,13 +13,7 @@ const DEPLOYED_API = 'http://18.214.247.229:7000/api';
 
 function resolveApiBase(): string {
   const override = (globalThis as { __API_BASE__?: string }).__API_BASE__;
-  if (override) return override;
-  // Demo local (ng serve): la API y las 8 bases del experimento están en
-  // localhost. Solo el host local usa el API local; cualquier otro host
-  // (S3, etc.) sigue apuntando a la EC2.
-  const host = location.hostname;
-  if (host === 'localhost' || host === '127.0.0.1') return 'http://localhost:7000/api';
-  return DEPLOYED_API;
+  return override || DEPLOYED_API;
 }
 
 const API = resolveApiBase();
