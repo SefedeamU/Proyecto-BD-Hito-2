@@ -86,11 +86,16 @@ func (a *App) withDB(next http.Handler) http.Handler {
 func storeOf(r *http.Request) *Store { return r.Context().Value(storeKey).(*Store) }
 
 func main() {
-	names := strings.Split(env("DATABASES", "bd_literaria_1k,bd_literaria_10k,bd_literaria_100k,bd_literaria_1m"), ",")
+	// Allowlist: las 8 bases del experimento. Por cada volumen hay dos copias:
+	//   _idx   = con el set de índices del informe (escenario "con índices")
+	//   _noidx = sin NINGÚN índice (escenario "sin índices")
+	// El frontend elige volumen + toggle de índices y arma el nombre completo,
+	// que llega en el header X-Database.
+	names := strings.Split(env("DATABASES", "bd_literaria_1k_idx,bd_literaria_1k_noidx,bd_literaria_10k_idx,bd_literaria_10k_noidx,bd_literaria_100k_idx,bd_literaria_100k_noidx,bd_literaria_1m_idx,bd_literaria_1m_noidx"), ",")
 	for i := range names {
 		names[i] = strings.TrimSpace(names[i])
 	}
-	def := env("PGDATABASE", "bd_literaria_10k")
+	def := env("PGDATABASE", "bd_literaria_10k_idx")
 	mgr := NewDBManager(names, def)
 	defer mgr.Close()
 

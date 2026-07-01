@@ -41,6 +41,32 @@
 }
 .db-select select:focus { outline: none; }
 
+/* Toggle de índices: enruta a la copia _idx (con índices) o _noidx (sin índices) */
+.idx-toggle {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 5px 12px;
+  background: var(--surface); color: var(--muted);
+  font-family: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+  transition: border-color var(--t-fast), background var(--t-fast), color var(--t-fast);
+}
+.idx-toggle b { font-weight: 800; letter-spacing: .02em; }
+.idx-toggle .idx-dot {
+  width: 9px; height: 9px; border-radius: 50%; background: var(--muted);
+  box-shadow: 0 0 0 3px transparent; transition: background var(--t-fast), box-shadow var(--t-fast);
+}
+.idx-toggle.on { border-color: #2e9d5b; background: rgba(46, 157, 91, .10); color: #1f7a44; }
+.idx-toggle.on .idx-dot { background: #2e9d5b; box-shadow: 0 0 0 3px rgba(46, 157, 91, .20); }
+.idx-toggle:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--mustard-soft); }
+
+/* Cronómetro: tiempo promedio de las consultas de la página actual */
+.perf {
+  display: flex; align-items: center; gap: 7px; flex-shrink: 0;
+  border: 1.5px solid var(--line); border-radius: 999px; padding: 4px 12px; background: var(--surface);
+}
+.perf-ico { font-size: .9rem; }
+.perf-avg { font-weight: 800; font-size: .9rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.perf-meta { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+
 .links { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
 .links > a { font-weight: 600; font-size: 0.92rem; color: var(--ink); position: relative; }
 .links > a:hover { color: var(--mustard-deep); }
@@ -67,8 +93,10 @@
   .links { gap: 10px; }
   .links > a:not(.btn) { display: none; } /* deja visibles solo botones/sesión */
   .links .user { display: inline; }
+  .perf-meta { display: none; } /* en móvil solo el promedio */
 }
 @media (max-width: 480px) {
   .nav-in { gap: 12px; height: 60px; }
   .logo-text b { display: inline; }
+  .perf { display: none; } /* sin espacio para el cronómetro en pantallas muy chicas */
 }

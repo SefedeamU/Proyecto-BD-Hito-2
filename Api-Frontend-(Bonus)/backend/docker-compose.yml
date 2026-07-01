@@ -12,6 +12,6 @@ services:
     environment:
       API_PORT: "7000"
       PGPORT: "${PGPORT:-5432}"
-      PGDATABASE: "${PGDATABASE:-bd_literaria_10k}"
+      PGDATABASE: "${PGDATABASE:-bd_literaria_10k_idx}"
       PGSSLMODE: "${PGSSLMODE:-prefer}"
     restart: unless-stopped

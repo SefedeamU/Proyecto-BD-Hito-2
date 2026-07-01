@@ -4,11 +4,12 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import { routes } from './app.routes';
 import { dbInterceptor } from './core/db-interceptor';
+import { perfInterceptor } from './core/perf-interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withInterceptors([dbInterceptor])),
+    provideHttpClient(withInterceptors([perfInterceptor, dbInterceptor])),
     provideRouter(routes, withInMemoryScrolling({ scrollPositionRestoration: 'top' })),
   ],
 };

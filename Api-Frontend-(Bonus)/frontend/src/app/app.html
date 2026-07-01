@@ -17,6 +17,26 @@
       </select>
     </div>
 
+    <button
+      class="idx-toggle"
+      [class.on]="dbcfg.indexes()"
+      (click)="toggleIndexes()"
+      [attr.aria-pressed]="dbcfg.indexes()"
+      title="Activa/desactiva los índices: enruta las consultas a la copia _idx (con índices) o _noidx (sin ningún índice)">
+      <span class="idx-dot" aria-hidden="true"></span>
+      Índices <b>{{ dbcfg.indexes() ? 'ON' : 'OFF' }}</b>
+    </button>
+
+    <div class="perf" title="Tiempo promedio de las consultas de esta página (round-trip al API)">
+      <span class="perf-ico" aria-hidden="true">⏱️</span>
+      @if (perf.count()) {
+        <span class="perf-avg">{{ perf.fmt(perf.avg()) }}</span>
+        <span class="perf-meta">prom · {{ perf.count() }} consultas · {{ perf.fmt(perf.total()) }} total</span>
+      } @else {
+        <span class="perf-meta">midiendo…</span>
+      }
+    </div>
+
     <nav class="links" aria-label="Principal">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Inicio</a>
       <a routerLink="/catalog" routerLinkActive="active">Explorar</a>
